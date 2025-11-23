@@ -13,7 +13,13 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<'free' | 'pro' | 'lifetime'>('free');
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isCameraLoading, setIsCameraLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const router = useRouter();
   const { userId } = useAuth();
 
@@ -47,7 +53,42 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchSubscriptionInfo();
+    // Détecter si on est sur mobile (iOS ou Android)
+    const checkMobile = () => {
+      if (typeof window === 'undefined') return;
+      
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera || '';
+      const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+      const isAndroid = /android/i.test(userAgent);
+      const isMobileDevice = isIOS || isAndroid;
+      const isSmallScreen = window.innerWidth <= 768;
+      const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      
+      // Considérer comme mobile si c'est iOS, Android, ou un petit écran avec tactile
+      setIsMobile(isMobileDevice || (isSmallScreen && hasTouchScreen));
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    window.addEventListener('orientationchange', checkMobile);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('orientationchange', checkMobile);
+    };
   }, [fetchSubscriptionInfo]);
+
+  // Nettoyer le stream vidéo quand le composant se démonte ou le modal se ferme
+  useEffect(() => {
+    if (!showCameraModal && streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [showCameraModal]);
 
   const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -156,7 +197,7 @@ export default function HomePage() {
     }
   };
 
-  const handleClick = () => {
+  const handleChooseFromGallery = () => {
     // If no scans remaining, show paywall instead of file picker
     if (subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0) {
       setShowPaywall(true);
@@ -166,6 +207,126 @@ export default function HomePage() {
     fileInputRef.current?.click();
   };
 
+  const handleTakePhoto = async () => {
+    // If no scans remaining, show paywall
+    if (subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0) {
+      setShowPaywall(true);
+      return;
+    }
+
+    // Sur mobile, utiliser l'input avec capture
+    if (isMobile) {
+      cameraInputRef.current?.click();
+      return;
+    }
+
+    // Sur desktop, utiliser WebRTC
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      // Fallback vers file picker si WebRTC n'est pas disponible
+      alert('Camera not available on this device. Please choose a file from your gallery instead.');
+      fileInputRef.current?.click();
+      return;
+    }
+
+    setIsCameraLoading(true);
+    try {
+      // Essayer d'abord avec la caméra arrière (environment), puis fallback vers user
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        });
+      } catch (envError) {
+        // Si environment échoue, essayer avec user (caméra avant)
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' }
+          });
+        } catch (userError) {
+          // Si les deux échouent, essayer sans contrainte
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true
+          });
+        }
+      }
+      
+      streamRef.current = stream;
+      setShowCameraModal(true);
+      setIsCameraLoading(false);
+      
+      // Attendre que le modal soit monté pour attacher le stream
+      setTimeout(() => {
+        if (videoRef.current && stream) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(err => {
+            console.error('Error playing video:', err);
+            setIsCameraLoading(false);
+          });
+          
+          // Détecter quand la vidéo est prête
+          videoRef.current.onloadedmetadata = () => {
+            setIsCameraLoading(false);
+          };
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      setIsCameraLoading(false);
+      // Fallback vers file picker si la caméra n'est pas disponible
+      alert('Camera not available. Please choose a file from your gallery instead.');
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleCameraInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+    // Réinitialiser l'input pour permettre de prendre plusieurs photos
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
+  };
+
+  const capturePhotoFromVideo = () => {
+    if (!videoRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) {
+      ctx.drawImage(video, 0, 0);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          // Arrêter le stream
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+          }
+          
+          // Fermer le modal
+          setShowCameraModal(false);
+          
+          // Créer un File à partir du Blob
+          const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+          handleFileSelect(file);
+        }
+      }, 'image/jpeg', 0.95);
+    }
+  };
+
+  const closeCameraModal = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setShowCameraModal(false);
+  };
+
   if (isLoading) {
     return <LoadingScreen />;
   }
@@ -173,7 +334,7 @@ export default function HomePage() {
   const getStatusBadge = () => {
     if (subscriptionStatus === 'pro') {
       return (
-        <div className="mb-6 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-xl p-4 text-center shadow-glow-sm">
+        <div className="mb-8 rounded-2xl border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-xl p-4 text-center shadow-glow-sm">
           <p className="text-sm font-semibold text-indigo-400">
             ⭐ Pro Member - Unlimited scans
           </p>
@@ -181,7 +342,7 @@ export default function HomePage() {
       );
     } else if (subscriptionStatus === 'lifetime') {
       return (
-        <div className="mb-6 rounded-2xl border border-pink-500/30 bg-pink-500/10 backdrop-blur-xl p-4 text-center shadow-glow-pink">
+        <div className="mb-8 rounded-2xl border border-pink-500/30 bg-pink-500/10 backdrop-blur-xl p-4 text-center shadow-glow-pink">
           <p className="text-sm font-semibold text-pink-400">
             💎 Lifetime Member - Lifetime access
           </p>
@@ -189,10 +350,13 @@ export default function HomePage() {
       );
     } else if (remainingScans !== null) {
       return (
-        <div className="mb-6 rounded-2xl border border-white/10 bg-black/50 backdrop-blur-xl p-4 text-center glass-card">
-          <p className="text-sm text-gray-400">
-            Free scans remaining: <span className="font-bold text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]">{remainingScans}/{MAX_FREE_SCANS}</span>
-          </p>
+        <div className="relative mb-8">
+          <div className="relative rounded-2xl border border-white/10 bg-black/50 backdrop-blur-xl p-5 text-center glass-card shadow-lg">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-500/5 via-pink-500/5 to-indigo-500/5 animate-pulse-slow" />
+            <p className="relative text-sm text-gray-400">
+              Free scans remaining: <span className="font-bold text-orange-500 drop-shadow-[0_0_12px_rgba(249,115,22,0.8)] text-lg">{remainingScans}/{MAX_FREE_SCANS}</span>
+            </p>
+          </div>
         </div>
       );
     }
@@ -200,43 +364,125 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col px-6 py-8 animate-fade-in">
-      <div className="mb-8 animate-slide-up">
-        <div className="mb-3 flex items-center gap-3">
-          <div className="rounded-full bg-gradient-primary p-2 shadow-glow-sm">
-            <Sparkles className="h-6 w-6 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            FlagCheck
-          </h1>
+    <div className="relative flex min-h-screen flex-col overflow-hidden">
+      {/* Subtle ambient aura effect - very low opacity for premium feel */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {/* Base dark background */}
+        <div className="absolute inset-0 bg-black" />
+        
+        {/* Subtle particle effect - tiny dots */}
+        <div className="absolute inset-0 opacity-[0.03]">
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-white rounded-full animate-particle-float"
+              style={{
+                left: `${(i * 7.2) % 100}%`,
+                top: `${(i * 11.3) % 100}%`,
+                animationDelay: `${i * 0.2}s`,
+                animationDuration: `${15 + (i % 10)}s`,
+              }}
+            />
+          ))}
         </div>
-        <p className="text-gray-400 text-base">
-          Scan dating profiles to detect red flags
-        </p>
+        
+        {/* Primary subtle ambient aura - centered behind hero section */}
+        <div className="absolute top-[180px] left-1/2 -translate-x-1/2 w-[1400px] h-[1400px] animate-ambient-aura">
+          <div className="absolute inset-0 bg-gradient-radial-aura blur-[120px]" />
+        </div>
+        
+        {/* Secondary subtle glow - offset for depth */}
+        <div className="absolute top-1/3 right-1/4 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] animate-ambient-aura-secondary">
+          <div className="absolute inset-0 bg-gradient-radial-aura-secondary blur-[100px]" />
+        </div>
+        
+        {/* Tertiary subtle glow - opposite side for balance */}
+        <div className="absolute bottom-1/3 left-1/4 translate-x-1/2 translate-y-1/2 w-[900px] h-[900px] animate-ambient-aura-tertiary">
+          <div className="absolute inset-0 bg-gradient-radial-aura blur-[110px]" />
+        </div>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center">
+      {/* Content Container */}
+      <div className="relative z-10 flex min-h-screen flex-col px-6 py-8 animate-fade-in">
+
+        {/* Premium Top Bar - Sticky */}
+        <div className="sticky top-0 z-50 mb-0 -mx-6 px-6 pt-4">
+          <div className="mx-auto max-w-[600px]">
+            <div className="flex h-[60px] items-center justify-between rounded-2xl border border-white/5 bg-black/40 backdrop-blur-[20px] px-5 shadow-lg">
+              {/* Left: Logo */}
+              <h1 className="text-xl font-bold text-white">
+                FlagCheck
+              </h1>
+              
+              {/* Right: Get PRO Button */}
+              {subscriptionStatus === 'free' && (
+                <button
+                  onClick={() => setShowPaywall(true)}
+                  className="rounded-xl bg-gradient-primary px-4 py-2 text-sm font-semibold text-white shadow-[0_4px_15px_rgba(99,102,241,0.4)] transition-all hover:scale-105 hover:shadow-[0_6px_20px_rgba(99,102,241,0.6)]"
+                >
+                  Get PRO
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Hero Section - Premium spacing (120px top and bottom) */}
+        <div className="relative z-10 mb-[120px] mt-[120px] text-center animate-fade-in">
+          {/* Subtle moving ambient aura around text - circular movement */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="absolute w-[700px] h-[700px] animate-aura-move">
+              <div className="absolute inset-0 bg-gradient-radial-text-aura blur-[80px]" />
+            </div>
+          </div>
+          
+          <div className="relative mb-4 inline-block">
+            {/* Glow effect matching camera icon - stronger and moving */}
+            <div className="absolute inset-0 bg-gradient-primary blur-2xl opacity-70 animate-glow-move" style={{
+              borderRadius: '12px',
+              transform: 'scale(1.3)',
+            }} />
+            <h2 
+              className="relative text-4xl font-bold leading-tight text-gray-50"
+              style={{
+                textShadow: '0 0 40px rgba(99, 102, 241, 0.8), 0 0 80px rgba(236, 72, 153, 0.6)'
+              }}
+            >
+              Find the{' '}
+              <span className="text-pink-500/80">red flags</span>
+              {' '}before you swipe right 🚩
+            </h2>
+          </div>
+          <p className="relative text-base text-gray-400">
+            AI-powered profile analysis in seconds
+          </p>
+        </div>
+
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center pt-8">
         <div className="w-full max-w-md">
           {/* Subscription Status */}
           {getStatusBadge()}
 
-          {/* Upload zone */}
-          <div className="group relative mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            {/* Glow effect on hover */}
-            <div className={`absolute inset-0 rounded-3xl bg-gradient-primary blur-2xl transition-all duration-300 ${
-              isDragging ? 'opacity-60 scale-105' : 'opacity-30 group-hover:opacity-50'
+          {/* Upload zone - Enhanced with depth and animations */}
+          <div className="group relative mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            {/* Multi-layer glow effects */}
+            <div className={`absolute -inset-1 rounded-3xl bg-gradient-primary blur-3xl transition-all duration-500 ${
+              isDragging ? 'opacity-70 scale-110' : 'opacity-40 group-hover:opacity-60 animate-pulse-glow'
+            }`} />
+            <div className={`absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-indigo-500/20 via-pink-500/20 to-indigo-500/20 blur-xl transition-all duration-500 ${
+              isDragging ? 'opacity-50' : 'opacity-30 group-hover:opacity-40'
             }`} />
             
+            {/* Main container with layered shadows */}
             <div
-              className={`relative rounded-3xl border-2 border-dashed p-12 backdrop-blur-xl transition-all duration-300 cursor-pointer min-h-[280px] flex items-center justify-center ${
+              className={`relative rounded-3xl border-2 border-dashed p-12 backdrop-blur-xl transition-all duration-500 min-h-[320px] flex items-center justify-center ${
                 isDragging
-                  ? 'border-indigo-500 bg-indigo-600/20 shadow-glow-md scale-[1.02]'
-                  : 'border-white/20 bg-black/40 hover:border-indigo-500/50 hover:bg-indigo-600/10 glass-card'
+                  ? 'border-indigo-500 bg-indigo-600/20 shadow-[0_0_60px_rgba(99,102,241,0.6),0_0_100px_rgba(236,72,153,0.4)] scale-[1.02]'
+                  : 'border-white/20 bg-black/40 glass-card shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.05),inset_0_1px_0_rgba(255,255,255,0.1)] group-hover:shadow-[0_12px_48px_rgba(0,0,0,0.5),0_0_0_1px_rgba(99,102,241,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] group-hover:-translate-y-1'
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              onClick={handleClick}
             >
               <input
                 ref={fileInputRef}
@@ -245,37 +491,62 @@ export default function HomePage() {
                 onChange={handleFileInputChange}
                 className="hidden"
               />
-              <div className="flex flex-col items-center gap-5 w-full">
-                <div className="rounded-full bg-gradient-primary p-6 shadow-glow-md group-hover:scale-110 transition-transform duration-300">
-                  <Camera className="h-12 w-12 text-white" />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleCameraInputChange}
+                className="hidden"
+              />
+              <div className="flex flex-col items-center gap-6 w-full">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-primary rounded-full blur-2xl opacity-50 group-hover:opacity-70 animate-pulse-glow" />
+                  <div className="relative rounded-full bg-gradient-primary p-6 shadow-[0_0_30px_rgba(99,102,241,0.6),0_0_60px_rgba(236,72,153,0.4)] group-hover:scale-110 transition-all duration-500">
+                    <Camera className="h-12 w-12 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                  </div>
                 </div>
                 <div className="text-center">
-                  <h2 className="mb-2 text-2xl font-bold text-white">
+                  <h2 className="mb-3 text-3xl font-bold text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
                     Let's scan for red flags 🚩
                   </h2>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-gray-400 mb-8">
                     {subscriptionStatus === 'free' && remainingScans === 0
                       ? 'Upgrade to Pro to continue'
-                      : 'Drag & drop an image or click to select'}
+                      : 'Drag & drop an image or choose an option below'}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="mt-2 w-full rounded-xl glow-button px-6 py-4 font-bold text-white text-base min-h-[56px] transition-all duration-300"
-                >
-                  {subscriptionStatus === 'free' && remainingScans === 0
-                    ? 'Upgrade to Pro'
-                    : 'Choose a file'}
-                </button>
+                <div className="flex flex-col gap-3 w-full">
+                  <button
+                    type="button"
+                    onClick={handleChooseFromGallery}
+                    disabled={subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0}
+                    className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-6 py-4 font-bold text-white text-base min-h-[56px] transition-all hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:shadow-glow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {subscriptionStatus === 'free' && remainingScans === 0
+                      ? 'Upgrade to Pro'
+                      : 'Choose from Gallery'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleTakePhoto}
+                    disabled={subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0}
+                    className="w-full rounded-xl glow-button px-6 py-4 font-bold text-white text-base min-h-[56px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {subscriptionStatus === 'free' && remainingScans === 0
+                      ? 'Upgrade to Pro'
+                      : 'Take Photo'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-6 glass-card animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <h3 className="mb-4 text-base font-bold text-white">
+          <div className="rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-8 glass-card animate-slide-up shadow-lg" style={{ animationDelay: '0.2s' }}>
+            <h3 className="mb-6 text-lg font-bold text-white">
               How it works?
             </h3>
-            <ul className="space-y-3 text-sm text-gray-400">
+            <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex items-start gap-3 stagger-item" style={{ animationDelay: '0.3s' }}>
                 <span className="mt-1 text-pink-500 text-lg">•</span>
                 <span>Upload a dating profile screenshot</span>
@@ -357,6 +628,70 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Camera Modal for Desktop */}
+      {showCameraModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-6 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-2xl rounded-3xl border border-white/10 bg-black/90 backdrop-blur-2xl p-8 shadow-2xl animate-slide-up">
+            <button
+              onClick={closeCameraModal}
+              className="absolute right-4 top-4 rounded-xl p-2 text-gray-400 transition-all hover:bg-white/10 hover:text-white z-10"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="mb-6 text-center">
+              <h2 className="mb-2 text-2xl font-bold text-white">
+                Take a Photo
+              </h2>
+              <p className="text-sm text-gray-400">
+                Position your camera and click capture
+              </p>
+            </div>
+
+            <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10 mb-6 min-h-[300px] flex items-center justify-center">
+              {isCameraLoading && (
+                <div className="absolute inset-0 flex items-center justify-center z-10">
+                  <div className="text-center">
+                    <div className="mb-4 inline-block rounded-full bg-gradient-primary p-4 shadow-glow-md animate-pulse">
+                      <Camera className="h-8 w-8 text-white" />
+                    </div>
+                    <p className="text-gray-400 text-sm">Starting camera...</p>
+                  </div>
+                </div>
+              )}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-auto max-h-[60vh] object-contain"
+              />
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 border-4 border-white/20 rounded-2xl" style={{
+                  clipPath: 'inset(20% 10% 20% 10%)'
+                }} />
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={closeCameraModal}
+                className="flex-1 rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-6 py-4 font-bold text-white transition-all hover:bg-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={capturePhotoFromVideo}
+                className="flex-1 rounded-xl glow-button px-6 py-4 font-bold text-white transition-all duration-300"
+              >
+                Capture Photo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
     </div>
   );
 }

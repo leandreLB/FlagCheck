@@ -1,6 +1,13 @@
 import { SignIn } from '@clerk/nextjs';
 
-export default function SignInPage() {
+interface SignInPageProps {
+  searchParams: { redirect_url?: string };
+}
+
+export default function SignInPage({ searchParams }: SignInPageProps) {
+  // Utiliser l'URL de redirection depuis les paramètres, sinon rediriger vers la page d'accueil
+  const redirectUrl = searchParams.redirect_url || '/';
+
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-black px-4">
       {/* Radial gradient background */}
@@ -16,6 +23,7 @@ export default function SignInPage() {
         </div>
         <div className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <SignIn
+            afterSignInUrl={redirectUrl}
             appearance={{
               elements: {
                 rootBox: 'mx-auto',

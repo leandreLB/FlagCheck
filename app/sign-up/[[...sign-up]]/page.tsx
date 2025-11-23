@@ -16,6 +16,7 @@ export default function SignUpPage() {
         </div>
         <div className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <SignUp
+            afterSignUpUrl="/"
             appearance={{
               elements: {
                 rootBox: 'mx-auto',
