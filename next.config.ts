@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-
 const withPWA = require("next-pwa")({
   dest: "public",
   register: true,
@@ -20,7 +19,7 @@ const withPWA = require("next-pwa")({
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  turbopack: {}, // Ajout pour compatibilité Turbopack
 };
 
 export default withPWA(nextConfig);
