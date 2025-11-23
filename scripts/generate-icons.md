@@ -46,3 +46,4 @@ Puis créez un script `scripts/generate-icons.js` (voir exemple ci-dessous)
 - Format : PNG avec transparence
 - Taille source : 512x512px minimum
 
+

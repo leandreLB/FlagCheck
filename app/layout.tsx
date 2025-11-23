@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "FlagCheck - Red Flag Scanner",
-  description: "Scanner de red flags pour profils de rencontres",
+  title: "FlagCheck - Dating Profile Scanner",
+  description: "Scan dating profiles for red flags",
   manifest: "/manifest.json",
   themeColor: "#6366F1",
   appleWebApp: {
@@ -22,12 +22,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
     ],
     apple: [
-      { url: "/icons/icon-152x152.png", sizes: "152x152", type: "image/png" },
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
   viewport: {
@@ -36,6 +36,10 @@ export const metadata: Metadata = {
     maximumScale: 1,
     userScalable: false,
     viewportFit: "cover",
+  },
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
   },
 };
 
@@ -46,9 +50,11 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="fr">
-        <body className={`${inter.variable} antialiased`}>
-          {children}
+      <html lang="fr" className="h-full">
+        <body className={`${inter.variable} antialiased h-full`}>
+          <div className="page-enter">
+            {children}
+          </div>
         </body>
       </html>
     </ClerkProvider>

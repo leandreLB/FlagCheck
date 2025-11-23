@@ -370,6 +370,65 @@ body::before {
   animation: pulse-slow 6s ease-in-out infinite;
 }
 
+/* PWA: Smooth page transitions - prevent white flash */
+html {
+  background-color: #0F0F0F;
+  transition: background-color 0.3s ease;
+}
+
+body {
+  background-color: #0F0F0F;
+  transition: background-color 0.3s ease;
+  /* Prevent white flash on page load */
+  opacity: 0;
+  animation: fadeInBody 0.5s ease-in forwards;
+}
+
+@keyframes fadeInBody {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Smooth page transitions */
+.page-enter {
+  animation: fadeIn 0.5s ease-out, slideUp 0.5s ease-out;
+  will-change: opacity, transform;
+}
+
+/* Prevent flash of unstyled content */
+#__next,
+[data-nextjs-scroll-focus-boundary] {
+  min-height: 100vh;
+  background-color: #0F0F0F;
+}
+
+/* Smooth transitions between routes */
+main {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Loading state - prevent white flash */
+.loading {
+  background-color: #0F0F0F;
+  min-height: 100vh;
+}
+
+/* Bounce animation for loading dots */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 0.7;
+  }
+}
+
 /* Ambient aura animations - very slow and subtle (30-60 second loops) */
 .animate-ambient-aura {
   animation: ambient-aura 50s ease-in-out infinite;
