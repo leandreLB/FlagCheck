@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: "FlagCheck - Dating Profile Scanner",
   description: "Scan dating profiles for red flags",
   manifest: "/manifest.json",
-  themeColor: "#6366F1",
+  themeColor: "#FF1493",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

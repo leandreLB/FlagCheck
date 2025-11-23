@@ -18,52 +18,76 @@ export default function Loading() {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0F0F0F] transition-opacity duration-500 ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-black transition-opacity duration-500 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
-      {/* Logo animé avec drapeau */}
+      {/* Logo au centre avec glow rose/violet */}
       <div className="relative mb-8">
-        {/* Fond dégradé animé */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-pink-500 opacity-20 blur-3xl animate-pulse-slow" />
+        {/* Glow effect rose/violet animé autour du logo */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-pink-500 via-rose-500 to-purple-500 opacity-40 blur-3xl animate-pulse-slow" 
+             style={{
+               width: '200px',
+               height: '200px',
+               left: '50%',
+               top: '50%',
+               transform: 'translate(-50%, -50%)',
+             }}
+        />
         
-        {/* Logo principal avec animation pulse */}
-        <div className="relative w-32 h-32 rounded-3xl bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center shadow-2xl animate-bounce">
-          <span className="text-6xl">🚩</span>
+        {/* Glow secondaire plus subtil */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-pink-400 to-purple-400 opacity-30 blur-2xl animate-pulse-glow"
+             style={{
+               width: '180px',
+               height: '180px',
+               left: '50%',
+               top: '50%',
+               transform: 'translate(-50%, -50%)',
+             }}
+        />
+        
+        {/* Logo principal avec fond dégradé rose-violet */}
+        <div className="relative w-32 h-32 rounded-3xl bg-gradient-to-br from-pink-600 via-rose-600 to-purple-600 flex items-center justify-center shadow-2xl animate-bounce"
+             style={{
+               boxShadow: '0 0 40px rgba(255, 20, 147, 0.6), 0 0 80px rgba(199, 21, 133, 0.4)',
+             }}
+        >
+          {/* Drapeau emoji stylisé */}
+          <span className="text-6xl filter drop-shadow-lg">🚩</span>
         </div>
-        
-        {/* Glow effect */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-500 to-pink-500 opacity-30 blur-2xl animate-pulse-glow" />
       </div>
 
-      {/* Texte FlagCheck */}
+      {/* Texte FlagCheck avec gradient rose-violet */}
       <h1 className="text-3xl font-bold mb-6 animate-pulse">
-        <span className="bg-gradient-to-r from-indigo-400 to-pink-400 bg-clip-text text-transparent">
+        <span className="bg-gradient-to-r from-pink-400 via-rose-400 to-purple-400 bg-clip-text text-transparent">
           FlagCheck
         </span>
       </h1>
 
-      {/* Loading spinner avec animation personnalisée */}
+      {/* Loading spinner avec points rose/violet */}
       <div className="flex space-x-2">
-        <div 
-          className="w-3 h-3 bg-indigo-500 rounded-full" 
-          style={{ 
-            animation: 'bounce 1.4s ease-in-out infinite',
-            animationDelay: '0ms'
-          }} 
-        />
         <div 
           className="w-3 h-3 bg-pink-500 rounded-full" 
           style={{ 
             animation: 'bounce 1.4s ease-in-out infinite',
-            animationDelay: '150ms'
+            animationDelay: '0ms',
+            boxShadow: '0 0 10px rgba(255, 20, 147, 0.6)',
           }} 
         />
         <div 
-          className="w-3 h-3 bg-indigo-500 rounded-full" 
+          className="w-3 h-3 bg-rose-500 rounded-full" 
           style={{ 
             animation: 'bounce 1.4s ease-in-out infinite',
-            animationDelay: '300ms'
+            animationDelay: '150ms',
+            boxShadow: '0 0 10px rgba(236, 72, 153, 0.6)',
+          }} 
+        />
+        <div 
+          className="w-3 h-3 bg-purple-500 rounded-full" 
+          style={{ 
+            animation: 'bounce 1.4s ease-in-out infinite',
+            animationDelay: '300ms',
+            boxShadow: '0 0 10px rgba(147, 51, 234, 0.6)',
           }} 
         />
       </div>
