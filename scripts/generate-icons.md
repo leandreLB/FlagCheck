@@ -47,3 +47,4 @@ Puis créez un script `scripts/generate-icons.js` (voir exemple ci-dessous)
 - Taille source : 512x512px minimum
 
 
+

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 // import "./globals.css";
 import "./styles.css";
+import SplashScreen from "@/components/SplashScreen";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -50,11 +51,10 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="fr" className="h-full">
-        <body className={`${inter.variable} antialiased h-full`}>
-          <div className="page-enter">
-            {children}
-          </div>
+      <html lang="fr">
+        <body className={`${inter.variable} antialiased`}>
+          <SplashScreen />
+          {children}
         </body>
       </html>
     </ClerkProvider>

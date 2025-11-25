@@ -364,7 +364,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden">
+    <div className="relative flex flex-col">
       {/* Subtle ambient aura effect - very low opacity for premium feel */}
       <div className="fixed inset-0 pointer-events-none z-0">
         {/* Base dark background */}
@@ -403,7 +403,7 @@ export default function HomePage() {
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex min-h-screen flex-col px-6 py-8 animate-fade-in">
+      <div className="relative z-10 flex flex-col px-6 py-8 animate-fade-in">
 
         {/* Premium Top Bar - Sticky */}
         <div className="sticky top-0 z-50 mb-0 -mx-6 px-6 pt-4">
