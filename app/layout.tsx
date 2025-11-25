@@ -57,7 +57,62 @@ export default function RootLayout({
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
           <meta name="theme-color" content="#000000" />
-          <link rel="apple-touch-startup-image" href="/splash.png" />
+          
+          {/* iOS Splash Screens - iPhone 14 Pro Max / 15 Pro Max */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-14-pro-max-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 932px) and (device-height: 430px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iphone-14-pro-max-landscape.png" />
+          
+          {/* iPhone 14 Pro / 15 Pro */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-14-pro-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 852px) and (device-height: 393px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iphone-14-pro-landscape.png" />
+          
+          {/* iPhone 14 Plus / 15 Plus */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-14-plus-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 926px) and (device-height: 428px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iphone-14-plus-landscape.png" />
+          
+          {/* iPhone 14 / 15 */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-14-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 844px) and (device-height: 390px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iphone-14-landscape.png" />
+          
+          {/* iPhone 13 Pro Max / 12 Pro Max */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-13-pro-max-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 926px) and (device-height: 428px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iphone-13-pro-max-landscape.png" />
+          
+          {/* iPhone 13 Pro / 12 Pro */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-13-pro-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 844px) and (device-height: 390px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iphone-13-pro-landscape.png" />
+          
+          {/* iPhone 13 / 12 */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-13-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 844px) and (device-height: 390px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iphone-13-landscape.png" />
+          
+          {/* iPhone 13 mini / 12 mini */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-13-mini-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 812px) and (device-height: 375px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iphone-13-mini-landscape.png" />
+          
+          {/* iPhone 11 Pro Max / XS Max */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-11-pro-max-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 896px) and (device-height: 414px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iphone-11-pro-max-landscape.png" />
+          
+          {/* iPhone 11 Pro / XS / X */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-11-pro-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 812px) and (device-height: 375px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iphone-11-pro-landscape.png" />
+          
+          {/* iPhone 11 / XR */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/iphone-11-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 896px) and (device-height: 414px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="/splash/iphone-11-landscape.png" />
+          
+          {/* iPhone SE (3rd gen) / 8 Plus */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/iphone-8-plus-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 736px) and (device-height: 414px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iphone-8-plus-landscape.png" />
+          
+          {/* iPhone SE (2nd/3rd gen) / 8 / 7 / 6s / 6 */}
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/iphone-8-portrait.png" />
+          <link rel="apple-touch-startup-image" media="screen and (device-width: 667px) and (device-height: 375px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" href="/splash/iphone-8-landscape.png" />
+          
+          {/* Fallback pour tous les autres appareils */}
+          <link rel="apple-touch-startup-image" href="/splash/default.png" />
+          
           <link rel="stylesheet" href="/critical.css" />
         </head>
         <body className={`${inter.variable} antialiased`} style={{ backgroundColor: '#000000', margin: 0, padding: 0 }}>
