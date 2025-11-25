@@ -32,7 +32,7 @@ export default function SplashScreen() {
       setIsVisible(false);
       // Mark as already shown
       localStorage.setItem(SPLASH_SHOWN_KEY, 'true');
-    }, 2000); // Displayed for 2 seconds
+    }, 5000); // Displayed for 5 seconds
 
     return () => {
       clearTimeout(loaderTimer);
