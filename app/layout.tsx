@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: "FlagCheck - Dating Profile Scanner",
   description: "Scan dating profiles for red flags",
   manifest: "/manifest.json",
-  themeColor: "#FF1493",
+  themeColor: "#0F0F0F",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -52,6 +52,13 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="fr">
+        <head>
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
+          <meta name="theme-color" content="#0F0F0F" />
+          <link rel="apple-touch-startup-image" href="/splash.png" />
+        </head>
         <body className={`${inter.variable} antialiased`}>
           <SplashScreen />
           {children}

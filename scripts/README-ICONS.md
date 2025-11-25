@@ -46,3 +46,4 @@ Après génération, vérifiez que les fichiers suivants existent :
 - ✅ `/public/favicon.ico` (ou `.png`)
 
 
+
