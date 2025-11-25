@@ -163,7 +163,7 @@ export default function DescribePage() {
   };
 
   return (
-    <div className="relative flex flex-col">
+    <div className="relative flex flex-col overflow-x-hidden w-full">
       {/* Subtle ambient aura effect */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-black" />
@@ -193,7 +193,7 @@ export default function DescribePage() {
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex flex-col px-6 py-8 animate-fade-in">
+      <div className="relative z-10 flex flex-col px-6 py-8 animate-fade-in overflow-x-hidden w-full">
         {/* Premium Top Bar - Sticky */}
         <div className="sticky top-0 z-50 mb-0 -mx-6 px-6 pt-4">
           <div className="mx-auto max-w-[600px]">

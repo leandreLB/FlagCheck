@@ -6,7 +6,7 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto min-h-screen max-w-[600px] bg-black pb-20 relative">
+    <div className="mx-auto min-h-screen max-w-[600px] bg-black pb-20 relative overflow-x-hidden w-full">
       {/* Radial gradient background */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-radial opacity-50" />
