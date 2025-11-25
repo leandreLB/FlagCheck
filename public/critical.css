@@ -1,0 +1,18 @@
+/* Critical CSS - Loaded immediately to prevent flash */
+html {
+  background-color: #000000 !important;
+  min-height: 100%;
+}
+
+body {
+  background-color: #000000 !important;
+  margin: 0;
+  padding: 0;
+}
+
+#__next,
+[data-nextjs-scroll-focus-boundary] {
+  background-color: #000000 !important;
+  min-height: 100vh;
+}
+
