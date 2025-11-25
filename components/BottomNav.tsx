@@ -19,7 +19,7 @@ export default function BottomNav() {
       {/* Glow effect at top */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-primary opacity-50" />
       
-      <div className="mx-auto flex max-w-[600px] items-center justify-around px-4 py-3">
+      <div className="mx-auto flex max-w-[600px] md:max-w-none items-center justify-around px-4 md:px-8 lg:px-12 py-3">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;

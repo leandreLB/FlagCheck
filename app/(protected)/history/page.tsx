@@ -87,7 +87,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col px-6 py-8 pb-24 bg-black animate-fade-in">
+    <div className="flex min-h-screen flex-col px-6 md:px-8 lg:px-12 py-8 pb-24 md:pb-8 bg-black animate-fade-in max-w-[600px] md:max-w-none mx-auto md:mx-0">
       <div className="mb-8 animate-slide-up">
         <h1 className="mb-2 text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">History</h1>
         <p className="text-gray-400 text-base">Your previous scans</p>
