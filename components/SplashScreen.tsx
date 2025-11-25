@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 const SPLASH_SHOWN_KEY = 'flagcheck-splash-shown';
 
 export default function SplashScreen() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true); // Visible immédiatement
   const [showLoader, setShowLoader] = useState(false);
 
   useEffect(() => {
@@ -15,24 +15,22 @@ export default function SplashScreen() {
     const hasShownSplash = localStorage.getItem(SPLASH_SHOWN_KEY);
     
     if (hasShownSplash) {
-      // Don't show splash if already seen
+      // Hide splash immediately if already seen
+      setIsVisible(false);
       return;
     }
 
-    // Show splash screen
-    setIsVisible(true);
-    
-    // Show loader after a short delay
+    // Show loader after a very short delay
     const loaderTimer = setTimeout(() => {
       setShowLoader(true);
-    }, 300);
+    }, 100); // Réduit à 100ms
 
-    // Hide splash screen after initial loading
+    // Hide splash screen after initial loading - réduit à 1.5 secondes
     const hideTimer = setTimeout(() => {
       setIsVisible(false);
       // Mark as already shown
       localStorage.setItem(SPLASH_SHOWN_KEY, 'true');
-    }, 5000); // Displayed for 5 seconds
+    }, 1500); // Réduit à 1.5 secondes
 
     return () => {
       clearTimeout(loaderTimer);
@@ -44,8 +42,14 @@ export default function SplashScreen() {
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black animate-fade-in"
-      style={{ pointerEvents: 'auto' }}
+      data-splash-screen
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
+      style={{ 
+        pointerEvents: 'auto',
+        backgroundColor: '#000000',
+        opacity: 1,
+        transition: 'opacity 0.3s ease-out'
+      }}
     >
       {/* Logo FlagCheck avec fade-in */}
       <div className="flex flex-col items-center gap-8 animate-fade-in">

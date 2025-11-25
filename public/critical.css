@@ -2,17 +2,31 @@
 html {
   background-color: #000000 !important;
   min-height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
   background-color: #000000 !important;
   margin: 0;
   padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  opacity: 1 !important;
 }
 
 #__next,
 [data-nextjs-scroll-focus-boundary] {
   background-color: #000000 !important;
   min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Hide splash immediately if already shown */
+body[data-splash-shown="true"] [data-splash-screen] {
+  display: none !important;
 }
 
