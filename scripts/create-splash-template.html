@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlagCheck Splash Screen Template</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background-color: #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+    }
+    
+    .splash-container {
+      text-align: center;
+    }
+    
+    .logo {
+      font-size: 80px;
+      font-weight: 900;
+      color: #FFFFFF;
+      text-shadow: 0 0 40px rgba(99, 102, 241, 0.8);
+      margin-bottom: 0;
+      letter-spacing: -2px;
+    }
+    
+    .glow {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .glow::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1.5);
+      width: 200px;
+      height: 200px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(236, 72, 153, 0.5));
+      border-radius: 50%;
+      filter: blur(60px);
+      z-index: -1;
+      opacity: 0.6;
+    }
+    
+    /* Styles spécifiques pour chaque taille */
+    .size-1170x2532 .logo { font-size: 120px; }
+    .size-1125x2436 .logo { font-size: 110px; }
+    .size-1179x2556 .logo { font-size: 125px; }
+    .size-1290x2796 .logo { font-size: 140px; }
+    .size-750x1334 .logo { font-size: 70px; }
+  </style>
+</head>
+<body>
+  <div class="splash-container">
+    <div class="glow">
+      <h1 class="logo">FlagCheck</h1>
+    </div>
+  </div>
+  
+  <script>
+    // Instructions pour générer les images:
+    // 1. Ouvrez ce fichier dans un navigateur
+    // 2. Utilisez les outils de développement pour ajuster la taille de la fenêtre
+    // 3. Utilisez une extension comme "Full Page Screen Capture" pour capturer l'écran
+    // 4. Ou utilisez un outil comme html2canvas pour générer les images programmatiquement
+    
+    console.log('Splash Screen Template - FlagCheck');
+    console.log('Dimensions supportées:');
+    console.log('- 1170x2532 (iPhone 14/15/13/12)');
+    console.log('- 1125x2436 (iPhone 13 mini/12 mini/11 Pro/XS/X)');
+    console.log('- 1179x2556 (iPhone 14 Pro/15 Pro)');
+    console.log('- 1290x2796 (iPhone 14 Pro Max/15 Pro Max)');
+    console.log('- 750x1334 (iPhone 8/7/6s/6)');
+  </script>
+</body>
+</html>
+
