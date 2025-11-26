@@ -18,6 +18,7 @@ export default function ResultsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [scanCount, setScanCount] = useState(0);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'free' | 'pro' | 'lifetime'>('free');
   const [isSharing, setIsSharing] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -31,16 +32,24 @@ export default function ResultsPage() {
         const data = await response.json();
         setScan(data);
 
-        // Check scan count for paywall
+        // Check subscription status first
+        const subResponse = await fetch('/api/subscription/check');
+        let subscriptionStatusData: { status: 'free' | 'pro' | 'lifetime' } | null = null;
+        if (subResponse.ok) {
+          subscriptionStatusData = await subResponse.json();
+          setSubscriptionStatus(subscriptionStatusData.status);
+        }
+
+        // Check scan count for paywall - only show if user is on free tier
         const scansResponse = await fetch('/api/scans/list');
         if (scansResponse.ok) {
           const scans = await scansResponse.json();
           const count = scans.length || 0;
           setScanCount(count);
           
-          // Show paywall if user is on free tier and used 3 scans
+          // Show paywall only if user is on free tier and used 3 scans
           // Note: This will show after the 3rd scan is completed
-          if (count >= MAX_FREE_SCANS) {
+          if (subscriptionStatusData && subscriptionStatusData.status === 'free' && count >= MAX_FREE_SCANS) {
             // Small delay to let the results render first
             setTimeout(() => {
               setShowPaywall(true);
@@ -313,8 +322,8 @@ export default function ResultsPage() {
                   <p className="text-sm text-gray-400">Unlimited scans</p>
                 </div>
                 <div className="mb-5">
-                  <span className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">$3.99</span>
-                  <span className="text-gray-400 ml-2">/month</span>
+                  <span className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">9.99€</span>
+                  <span className="text-gray-400 ml-2">/mois</span>
                 </div>
                 <button
                   onClick={() => handleCheckout('pro')}

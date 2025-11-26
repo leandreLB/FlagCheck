@@ -73,8 +73,36 @@ export default function ProfilePage() {
   };
 
   const handleCancelSubscription = async () => {
-    // TODO: Implement subscription cancellation via Stripe
-    alert('Cancellation feature coming soon. Contact support to cancel your subscription.');
+    if (!confirm('Êtes-vous sûr de vouloir annuler votre abonnement Pro ? Vous perdrez l\'accès aux scans illimités à la fin de la période de facturation.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/subscription/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || 'Failed to cancel subscription');
+      }
+
+      const data = await response.json();
+      
+      // Recharger les données pour mettre à jour le statut
+      const subResponse = await fetch('/api/subscription/check');
+      if (subResponse.ok) {
+        const subData = await subResponse.json();
+        setSubscriptionStatus(subData.status);
+      }
+
+      alert('Votre abonnement a été annulé avec succès. Vous continuerez à avoir accès jusqu\'à la fin de la période de facturation.');
+    } catch (error) {
+      console.error('Cancel subscription error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'annulation. Veuillez réessayer.';
+      alert(errorMessage);
+    }
   };
 
   const handleSignOut = async () => {
@@ -122,12 +150,12 @@ export default function ProfilePage() {
       return (
         <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600/20 to-indigo-600/10 backdrop-blur-xl px-5 py-3 border border-indigo-600/30 shadow-glow-sm">
           <Crown className="h-5 w-5 text-indigo-400" />
-          <span className="font-bold text-indigo-400">Pro Member - $3.99/month</span>
+          <span className="font-bold text-indigo-400">Pro Member - 9.99€/mois</span>
           <button
             onClick={handleCancelSubscription}
             className="ml-auto rounded-lg px-3 py-1 text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-all"
           >
-            Cancel
+            Annuler l'abonnement
           </button>
         </div>
       );
