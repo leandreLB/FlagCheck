@@ -596,8 +596,8 @@ export default function HomePage() {
                   <p className="text-sm text-gray-400">Unlimited scans</p>
                 </div>
                 <div className="mb-5">
-                  <span className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">9.99€</span>
-                  <span className="text-gray-400 ml-2">/mois</span>
+                  <span className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">$3.99</span>
+                  <span className="text-gray-400 ml-2">/month</span>
                 </div>
                 <button
                   onClick={() => handleCheckout('pro')}

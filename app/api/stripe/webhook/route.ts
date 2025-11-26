@@ -47,11 +47,13 @@ export async function POST(request: Request) {
 
     console.log("📨 Event type:", event.type);
 
-    // Handle checkout.session.completed
+    // Handle checkout.session.completed (paiement réussi)
+    // IMPORTANT: Nécessaire pour le plan Lifetime (paiement unique sans abonnement récurrent)
+    // Si cet événement n'est pas disponible, le plan Lifetime ne fonctionnera pas automatiquement
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.userId;
-      const priceType = session.metadata?.priceType; // "pro" or "lifetime"
+      const priceType = session.metadata?.priceType; // "monthly" or "lifetime"
 
       console.log("👤 userId:", userId);
       console.log("💳 priceType:", priceType);
@@ -64,7 +66,7 @@ export async function POST(request: Request) {
         );
       }
 
-      if (!priceType || (priceType !== "pro" && priceType !== "lifetime")) {
+      if (!priceType || (priceType !== "monthly" && priceType !== "lifetime")) {
         console.error("❌ priceType invalide:", priceType);
         return NextResponse.json(
           { error: "priceType invalide" },
@@ -73,11 +75,12 @@ export async function POST(request: Request) {
       }
 
       // Déterminer le statut d'abonnement
-      const subscriptionStatus = priceType === "pro" ? "pro" : "lifetime";
+      // "monthly" = pro, "lifetime" = lifetime
+      const subscriptionStatus = priceType === "monthly" ? "pro" : "lifetime";
 
       // Récupérer l'ID de l'abonnement si c'est Pro (subscription récurrente)
       let subscriptionId: string | null = null;
-      if (priceType === "pro" && session.subscription) {
+      if (priceType === "monthly" && session.subscription) {
         subscriptionId =
           typeof session.subscription === "string"
             ? session.subscription
@@ -136,21 +139,173 @@ export async function POST(request: Request) {
       }
     } 
     
+    // Handle customer.subscription.updated (Pro subscription status changes)
+    // Cet événement gère TOUS les changements d'abonnement, y compris la création et la suppression
+    else if (event.type === "customer.subscription.updated") {
+      const subscription = event.data.object as Stripe.Subscription;
+      
+      console.log("🔄 Subscription updated:", subscription.id, "Status:", subscription.status);
+
+      // Chercher l'utilisateur par subscription_id
+      let user = null;
+      const { data: userBySubscription } = await supabase
+        .from("users")
+        .select("user_id, subscription_status")
+        .eq("subscription_id", subscription.id)
+        .single();
+
+      if (userBySubscription) {
+        user = userBySubscription;
+      } else {
+        // Si l'utilisateur n'est pas trouvé par subscription_id, c'est peut-être une nouvelle souscription
+        // On ne peut pas l'activer automatiquement sans userId dans les métadonnées
+        // Dans ce cas, on attend checkout.session.completed ou on ignore
+        console.log("⚠️ User not found for subscription_id:", subscription.id);
+        console.log("⚠️ Si c'est une nouvelle souscription, elle sera activée par checkout.session.completed");
+        return NextResponse.json({ received: true }, { status: 200 });
+      }
+
+      // Si l'utilisateur a un abonnement Lifetime, ne pas modifier son statut
+      if (user.subscription_status === "lifetime") {
+        console.log("✅ User has lifetime subscription, skipping update");
+        return NextResponse.json({ received: true }, { status: 200 });
+      }
+
+      // Vérifier le statut de l'abonnement Stripe
+      // active = abonnement actif et payé
+      // trialing = période d'essai
+      // past_due = paiement en retard
+      // unpaid = non payé
+      // canceled = annulé (gère aussi les suppressions)
+      // incomplete, incomplete_expired = paiement incomplet
+      if (
+        subscription.status === "active" ||
+        subscription.status === "trialing"
+      ) {
+        // Abonnement actif, s'assurer que le statut est "pro"
+        console.log("✅ Subscription is active, ensuring Pro status");
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({
+            subscription_status: "pro",
+            subscription_id: subscription.id,
+          })
+          .eq("user_id", user.user_id);
+
+        if (updateError) {
+          console.error("❌ Update error:", updateError);
+          return NextResponse.json(
+            { error: "Update failed" },
+            { status: 500 }
+          );
+        }
+        console.log("✅ User status updated to Pro");
+      } else if (
+        subscription.status === "past_due" ||
+        subscription.status === "unpaid" ||
+        subscription.status === "canceled" ||
+        subscription.status === "incomplete_expired"
+      ) {
+        // Paiement échoué, annulé ou supprimé, retirer l'accès Pro
+        // Note: "canceled" gère aussi les suppressions (équivalent à customer.subscription.deleted)
+        console.log("🚫 Subscription payment failed, canceled or deleted, removing Pro access");
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({
+            subscription_status: "free",
+            subscription_id: null,
+          })
+          .eq("user_id", user.user_id);
+
+        if (updateError) {
+          console.error("❌ Update error:", updateError);
+          return NextResponse.json(
+            { error: "Update failed" },
+            { status: 500 }
+          );
+        }
+        console.log("✅ User switched to free due to payment failure");
+      }
+    }
+    
     // Handle customer.subscription.deleted (Pro subscription cancellation)
+    // Note: customer.subscription.updated avec status="canceled" gère aussi les suppressions
     else if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;
       
-      console.log("🚫 Subscription cancellation:", subscription.id);
+      console.log("🚫 Subscription deleted:", subscription.id);
 
       // Get user by subscription_id
       const { data: user } = await supabase
         .from("users")
-        .select("user_id")
+        .select("user_id, subscription_status")
         .eq("subscription_id", subscription.id)
         .single();
 
-      if (user) {
-        console.log("👤 User found, switching to free...");
+      if (!user) {
+        console.log("⚠️ User not found for subscription_id:", subscription.id);
+        return NextResponse.json({ received: true }, { status: 200 });
+      }
+
+      // Si l'utilisateur a un abonnement Lifetime, ne pas modifier son statut
+      if (user.subscription_status === "lifetime") {
+        console.log("✅ User has lifetime subscription, skipping deletion");
+        return NextResponse.json({ received: true }, { status: 200 });
+      }
+
+      console.log("👤 User found, switching to free...");
+      
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({
+          subscription_status: "free",
+          subscription_id: null,
+        })
+        .eq("user_id", user.user_id);
+
+      if (updateError) {
+        console.error("❌ Update error:", updateError);
+        return NextResponse.json(
+          { error: "Update failed" },
+          { status: 500 }
+        );
+      }
+      
+      console.log("✅ Subscription cancelled, user switched to free");
+    }
+    
+    // Handle invoice.payment_failed (Payment failed for Pro subscription)
+    else if (event.type === "invoice.payment_failed") {
+      const invoice = event.data.object as Stripe.Invoice;
+      
+      console.log("💳 Invoice payment failed:", invoice.id);
+
+      // Si c'est une facture d'abonnement (subscription existe)
+      if (invoice.subscription) {
+        const subscriptionId =
+          typeof invoice.subscription === "string"
+            ? invoice.subscription
+            : invoice.subscription.id;
+
+        // Get user by subscription_id
+        const { data: user } = await supabase
+          .from("users")
+          .select("user_id, subscription_status")
+          .eq("subscription_id", subscriptionId)
+          .single();
+
+        if (!user) {
+          console.log("⚠️ User not found for subscription_id:", subscriptionId);
+          return NextResponse.json({ received: true }, { status: 200 });
+        }
+
+        // Si l'utilisateur a un abonnement Lifetime, ne pas modifier son statut
+        if (user.subscription_status === "lifetime") {
+          console.log("✅ User has lifetime subscription, skipping payment failure");
+          return NextResponse.json({ received: true }, { status: 200 });
+        }
+
+        console.log("🚫 Payment failed for Pro subscription, removing Pro access");
         
         const { error: updateError } = await supabase
           .from("users")
@@ -168,10 +323,15 @@ export async function POST(request: Request) {
           );
         }
         
-        console.log("✅ Subscription cancelled, user switched to free");
-      } else {
-        console.log("⚠️ User not found for subscription_id:", subscription.id);
+        console.log("✅ User switched to free due to payment failure");
       }
+    }
+    // Si l'événement n'est pas géré, logger un avertissement mais ne pas échouer
+    else {
+      console.log("⚠️ Event type not handled:", event.type);
+      // Retourner success pour ne pas faire échouer le webhook
+      // Stripe réessaiera si on retourne une erreur
+      return NextResponse.json({ received: true, note: "Event type not handled" }, { status: 200 });
     }
 
     console.log("✅ Webhook processed successfully");
