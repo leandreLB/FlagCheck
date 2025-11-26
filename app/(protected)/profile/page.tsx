@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useUser, useClerk } from '@clerk/nextjs';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { 
   LogOut, 
   Trash2, 
@@ -18,7 +18,6 @@ export default function ProfilePage() {
   const { user } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [subscriptionStatus, setSubscriptionStatus] = useState<'free' | 'pro' | 'lifetime'>('free');
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,19 +48,7 @@ export default function ProfilePage() {
     };
 
     fetchData();
-
-    // Si on revient de Stripe avec un session_id, attendre un peu pour que le webhook soit traité
-    // puis rafraîchir le statut
-    const sessionId = searchParams.get('session_id');
-    if (sessionId) {
-      // Attendre 2 secondes pour laisser le temps au webhook d'être traité
-      setTimeout(() => {
-        fetchData();
-        // Nettoyer l'URL
-        router.replace('/profile');
-      }, 2000);
-    }
-  }, [searchParams, router]);
+  }, []);
 
   const handleUpgrade = async () => {
     try {

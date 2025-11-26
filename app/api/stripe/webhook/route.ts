@@ -281,11 +281,15 @@ export async function POST(request: Request) {
       console.log("💳 Invoice payment failed:", invoice.id);
 
       // Si c'est une facture d'abonnement (subscription existe)
-      if (invoice.subscription) {
-        const subscriptionId =
-          typeof invoice.subscription === "string"
-            ? invoice.subscription
-            : invoice.subscription.id;
+      // Dans Stripe, invoice.subscription peut être string | Stripe.Subscription | null
+      const subscriptionValue = (invoice as any).subscription;
+      const subscriptionId = subscriptionValue 
+        ? (typeof subscriptionValue === "string" 
+            ? subscriptionValue 
+            : subscriptionValue.id)
+        : null;
+
+      if (subscriptionId) {
 
         // Get user by subscription_id
         const { data: user } = await supabase
@@ -324,6 +328,9 @@ export async function POST(request: Request) {
         }
         
         console.log("✅ User switched to free due to payment failure");
+      } else {
+        console.log("⚠️ Invoice is not linked to a subscription, skipping");
+        return NextResponse.json({ received: true }, { status: 200 });
       }
     }
     // Si l'événement n'est pas géré, logger un avertissement mais ne pas échouer
