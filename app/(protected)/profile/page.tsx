@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useUser, useClerk } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   LogOut, 
   Trash2, 
@@ -18,37 +18,53 @@ export default function ProfilePage() {
   const { user } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [subscriptionStatus, setSubscriptionStatus] = useState<'free' | 'pro' | 'lifetime'>('free');
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch subscription status
-        const subResponse = await fetch('/api/subscription/check');
-        if (subResponse.ok) {
-          const subData = await subResponse.json();
-          setSubscriptionStatus(subData.status);
-        }
-
-        // Fetch scans for stats
-        const scansResponse = await fetch('/api/scans/list');
-        if (scansResponse.ok) {
-          const scansData = await scansResponse.json();
-          setScans(scansData || []);
-        }
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setIsLoading(false);
+  const fetchData = async () => {
+    try {
+      // Fetch subscription status
+      const subResponse = await fetch('/api/subscription/check');
+      if (subResponse.ok) {
+        const subData = await subResponse.json();
+        setSubscriptionStatus(subData.status);
       }
-    };
 
+      // Fetch scans for stats
+      const scansResponse = await fetch('/api/scans/list');
+      if (scansResponse.ok) {
+        const scansData = await scansResponse.json();
+        setScans(scansData || []);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
-  }, []);
+
+    // Si on revient de Stripe avec un session_id, attendre que le webhook soit traité puis rafraîchir
+    const sessionId = searchParams.get('session_id');
+    if (sessionId) {
+      console.log('✅ Payment successful, waiting for webhook...');
+      // Attendre 3 secondes pour laisser le temps au webhook d'être traité
+      const timeout = setTimeout(() => {
+        console.log('🔄 Refreshing subscription status...');
+        fetchData();
+        // Nettoyer l'URL
+        router.replace('/profile');
+      }, 3000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [searchParams, router]);
 
   const handleUpgrade = async () => {
     try {

@@ -53,11 +53,46 @@ export async function POST(request: Request) {
     // Si cet événement n'est pas disponible, le plan Lifetime ne fonctionnera pas automatiquement
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.metadata?.userId;
-      const priceType = session.metadata?.priceType; // "monthly" or "lifetime"
+      
+      // Les métadonnées peuvent être dans session.metadata OU dans subscription.metadata (pour monthly)
+      // ou payment_intent.metadata (pour lifetime)
+      let userId = session.metadata?.userId;
+      let priceType = session.metadata?.priceType;
+      
+      // Si pas dans session.metadata, essayer de récupérer depuis subscription ou payment_intent
+      if (!userId || !priceType) {
+        // Pour les abonnements monthly, les métadonnées sont dans subscription_data
+        if (session.subscription) {
+          const subscriptionId = typeof session.subscription === "string" 
+            ? session.subscription 
+            : session.subscription.id;
+          try {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            userId = subscription.metadata?.userId || userId;
+            priceType = subscription.metadata?.priceType || priceType;
+          } catch (err) {
+            console.error("Error retrieving subscription:", err);
+          }
+        }
+        
+        // Pour les paiements uniques lifetime, les métadonnées sont dans payment_intent
+        if (session.payment_intent && (!userId || !priceType)) {
+          const paymentIntentId = typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : session.payment_intent.id;
+          try {
+            const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+            userId = paymentIntent.metadata?.userId || userId;
+            priceType = paymentIntent.metadata?.priceType || priceType;
+          } catch (err) {
+            console.error("Error retrieving payment intent:", err);
+          }
+        }
+      }
 
       console.log("👤 userId:", userId);
       console.log("💳 priceType:", priceType);
+      console.log("📋 Session metadata:", session.metadata);
 
       if (!userId) {
         console.error("❌ userId missing in metadata");
