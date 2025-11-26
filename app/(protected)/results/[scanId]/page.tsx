@@ -37,7 +37,9 @@ export default function ResultsPage() {
         let subscriptionStatusData: { status: 'free' | 'pro' | 'lifetime' } | null = null;
         if (subResponse.ok) {
           subscriptionStatusData = await subResponse.json();
-          setSubscriptionStatus(subscriptionStatusData.status);
+          if (subscriptionStatusData) {
+            setSubscriptionStatus(subscriptionStatusData.status);
+          }
         }
 
         // Check scan count for paywall - only show if user is on free tier
@@ -49,7 +51,7 @@ export default function ResultsPage() {
           
           // Show paywall only if user is on free tier and used 3 scans
           // Note: This will show after the 3rd scan is completed
-          if (subscriptionStatusData && subscriptionStatusData.status === 'free' && count >= MAX_FREE_SCANS) {
+          if (subscriptionStatusData?.status === 'free' && count >= MAX_FREE_SCANS) {
             // Small delay to let the results render first
             setTimeout(() => {
               setShowPaywall(true);
@@ -130,23 +132,29 @@ export default function ResultsPage() {
 
   const handleCheckout = async (plan: 'pro' | 'lifetime') => {
     try {
-      const response = await fetch('/api/checkout', {
+      // Convertir 'pro' en 'monthly' pour correspondre à l'API
+      const priceType = plan === 'pro' ? 'monthly' : 'lifetime';
+      const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ priceType }),
       });
 
       if (!response.ok) {
-        throw new Error('Error creating payment session');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || 'Failed to create checkout session');
       }
 
-      const { url } = await response.json();
-      if (url) {
-        window.location.href = url;
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('Payment URL not received');
       }
     } catch (err) {
       console.error('Checkout error:', err);
-      alert('Payment failed. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Payment failed. Please try again.';
+      alert(errorMessage);
     }
   };
 
@@ -357,3 +365,4 @@ export default function ResultsPage() {
     </div>
   );
 }
+
