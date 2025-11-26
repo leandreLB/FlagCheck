@@ -12,6 +12,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request: Request) {
   console.log("🪝 Webhook Stripe appelé");
+  // Webhook updated to handle all payment scenarios
   
   try {
     const body = await request.text();
