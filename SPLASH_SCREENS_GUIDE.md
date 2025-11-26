@@ -118,3 +118,4 @@ public/
 - Testez sur de vrais appareils iOS pour vérifier que les splash screens s'affichent correctement
 - Le meta tag `viewport-fit=cover` dans le layout permet aux splash screens de couvrir tout l'écran, y compris les zones sûres
 
+

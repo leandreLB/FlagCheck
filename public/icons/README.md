@@ -38,3 +38,4 @@ convert logo.svg -resize 72x72 icon-72x72.png
 
 
 
+

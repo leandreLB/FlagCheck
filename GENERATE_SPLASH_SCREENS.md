@@ -106,3 +106,4 @@ public/
 - Le fond doit être noir (#000000) pour correspondre au thème de l'app
 - Testez sur de vrais appareils iOS pour vérifier l'affichage correct
 
+
