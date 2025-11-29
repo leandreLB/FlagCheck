@@ -1,12 +1,13 @@
+/* CRITICAL: @import rules must be at the very top */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
 /* CRITICAL: Prevent white/black flash - Must be first */
 html, body, #__next, [data-nextjs-scroll-focus-boundary] {
   background-color: #000000 !important;
   margin: 0;
   padding: 0;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-@import "tailwindcss";
 
 * {
   margin: 0;

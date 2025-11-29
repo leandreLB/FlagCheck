@@ -356,7 +356,7 @@ export default function DescribePage() {
                   <p className="text-sm text-gray-400">Unlimited scans</p>
                 </div>
                 <div className="mb-5">
-                  <span className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">$3.99</span>
+                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$3.99</span>
                   <span className="text-gray-400 ml-2">/month</span>
                 </div>
                 <button

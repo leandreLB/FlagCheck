@@ -8,6 +8,11 @@ const isPublicRoute = createRouteMatcher([
 ])
 
 export default clerkMiddleware(async (auth, request) => {
+  // Exclure explicitement le webhook Stripe du middleware
+  if (request.nextUrl.pathname === '/api/stripe/webhook') {
+    return NextResponse.next();
+  }
+
   // Vérifier si la route nécessite une authentification
   if (!isPublicRoute(request)) {
     const { userId } = await auth()
@@ -26,13 +31,13 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api/stripe/webhook (webhook Stripe - doit être exclu)
+     * - api (routes API - gérées séparément)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public files (images, etc.)
      */
-    '/((?!api/stripe/webhook|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)).*)',
   ],
 }
 
