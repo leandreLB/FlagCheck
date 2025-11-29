@@ -27,6 +27,8 @@ export default function ProfilePage() {
 
   const fetchData = async () => {
     try {
+      setIsLoading(true);
+      
       // Fetch subscription status
       const subResponse = await fetch('/api/subscription/check');
       if (subResponse.ok) {
@@ -38,10 +40,17 @@ export default function ProfilePage() {
       const scansResponse = await fetch('/api/scans/list');
       if (scansResponse.ok) {
         const scansData = await scansResponse.json();
-        setScans(scansData || []);
+        // Ensure we have an array, even if empty
+        const scansArray = Array.isArray(scansData) ? scansData : [];
+        setScans(scansArray);
+        console.log('Scans loaded:', scansArray.length, scansArray);
+      } else {
+        console.error('Failed to fetch scans:', scansResponse.status);
+        setScans([]);
       }
     } catch (error) {
       console.error('Error loading data:', error);
+      setScans([]);
     } finally {
       setIsLoading(false);
     }
@@ -68,29 +77,58 @@ export default function ProfilePage() {
 
   const handleUpgrade = async () => {
     try {
-      const response = await fetch('/api/checkout', {
+      // Convert 'pro' to 'monthly' to match the API
+      const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: 'pro' }),
+        body: JSON.stringify({ priceType: 'monthly' }),
       });
 
-      if (response.ok) {
-        const { url } = await response.json();
-        if (url) {
-          window.location.href = url;
-        }
-      } else {
-        alert('Error creating payment session');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('API Error:', errorData);
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
       }
-    } catch (error) {
-      console.error('Checkout error:', error);
-      alert('Payment failed. Please try again.');
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('Payment URL not received');
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Payment failed. Please try again.';
+      alert(errorMessage);
     }
   };
 
   const handleCancelSubscription = async () => {
-    // TODO: Implement subscription cancellation via Stripe
-    alert('Cancellation feature coming soon. Contact support to cancel your subscription.');
+    if (!confirm('Are you sure you want to cancel your Pro subscription? You will lose access to unlimited scans at the end of your billing period.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/subscription/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      alert('Subscription cancelled successfully. Your access will continue until the end of your billing period.');
+      
+      // Refresh subscription status
+      await fetchData();
+    } catch (err) {
+      console.error('Cancel subscription error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to cancel subscription. Please try again.';
+      alert(errorMessage);
+    }
   };
 
   const handleSignOut = async () => {
@@ -118,19 +156,41 @@ export default function ProfilePage() {
     }
   };
 
-  // Calculate stats
-  const totalScans = scans.length;
-  const averageScore = scans.length > 0
-    ? Math.round((scans.reduce((sum, scan) => sum + scan.score, 0) / scans.length) * 10) / 10
-    : 0;
+  // Calculate stats - ensure scans is an array
+  const totalScans = Array.isArray(scans) ? scans.length : 0;
+  
+  // Calculate average score with proper handling
+  let averageScore = 0;
+  if (totalScans > 0 && Array.isArray(scans)) {
+    const validScans = scans.filter(scan => scan && typeof scan.score === 'number' && !isNaN(scan.score));
+    if (validScans.length > 0) {
+      const sum = validScans.reduce((sum, scan) => sum + scan.score, 0);
+      averageScore = Math.round((sum / validScans.length) * 10) / 10;
+    }
+  }
+  
+  // Debug logs
+  console.log('Stats calculation:', {
+    totalScans,
+    scansLength: scans.length,
+    scans: scans,
+    averageScore,
+    firstScan: scans[0]
+  });
   
   // Find most common red flag
   const flagCounts: Record<string, number> = {};
-  scans.forEach(scan => {
-    scan.red_flags.forEach(flag => {
-      flagCounts[flag.flag] = (flagCounts[flag.flag] || 0) + 1;
+  if (Array.isArray(scans)) {
+    scans.forEach(scan => {
+      if (scan.red_flags && Array.isArray(scan.red_flags)) {
+        scan.red_flags.forEach(flag => {
+          if (flag && flag.flag) {
+            flagCounts[flag.flag] = (flagCounts[flag.flag] || 0) + 1;
+          }
+        });
+      }
     });
-  });
+  }
   const mostCommonFlag = Object.entries(flagCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'None';
 
   const getSubscriptionBadge = () => {
@@ -243,8 +303,8 @@ export default function ProfilePage() {
                 </div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Total Scans</p>
               </div>
-              <p className="text-5xl font-black bg-gradient-primary bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(99,102,241,0.5)]">
-                {totalScans}
+              <p className="text-5xl font-black text-indigo-400 drop-shadow-[0_0_12px_rgba(99,102,241,0.5)]">
+                {totalScans || 0}
               </p>
             </div>
 
@@ -256,7 +316,7 @@ export default function ProfilePage() {
                 </div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Average Score</p>
               </div>
-              <p className="text-5xl font-black bg-gradient-orange bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(249,115,22,0.5)]">
+              <p className="text-5xl font-black text-orange-400 drop-shadow-[0_0_12px_rgba(249,115,22,0.5)]">
                 {averageScore > 0 ? averageScore.toFixed(1) : '0.0'}
               </p>
             </div>

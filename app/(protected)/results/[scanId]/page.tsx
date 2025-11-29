@@ -18,6 +18,7 @@ export default function ResultsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [scanCount, setScanCount] = useState(0);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'free' | 'pro' | 'lifetime'>('free');
   const [isSharing, setIsSharing] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -31,6 +32,15 @@ export default function ResultsPage() {
         const data = await response.json();
         setScan(data);
 
+        // Check subscription status first
+        let subscriptionStatus = 'free';
+        const subscriptionResponse = await fetch('/api/subscription/check');
+        if (subscriptionResponse.ok) {
+          const subscriptionData = await subscriptionResponse.json();
+          subscriptionStatus = subscriptionData.status;
+          setSubscriptionStatus(subscriptionData.status);
+        }
+
         // Check scan count for paywall
         const scansResponse = await fetch('/api/scans/list');
         if (scansResponse.ok) {
@@ -38,9 +48,9 @@ export default function ResultsPage() {
           const count = scans.length || 0;
           setScanCount(count);
           
-          // Show paywall if user is on free tier and used 3 scans
-          // Note: This will show after the 3rd scan is completed
-          if (count >= MAX_FREE_SCANS) {
+          // Show paywall ONLY if user is on free tier AND used 3 scans
+          // Pro and Lifetime users should NEVER see this popup
+          if (subscriptionStatus === 'free' && count >= MAX_FREE_SCANS) {
             // Small delay to let the results render first
             setTimeout(() => {
               setShowPaywall(true);
@@ -121,23 +131,30 @@ export default function ResultsPage() {
 
   const handleCheckout = async (plan: 'pro' | 'lifetime') => {
     try {
-      const response = await fetch('/api/checkout', {
+      // Convert 'pro' to 'monthly' to match the API
+      const priceType = plan === 'pro' ? 'monthly' : 'lifetime';
+      const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ priceType }),
       });
 
       if (!response.ok) {
-        throw new Error('Error creating payment session');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('API Error:', errorData);
+        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
       }
 
-      const { url } = await response.json();
-      if (url) {
-        window.location.href = url;
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('Payment URL not received');
       }
     } catch (err) {
       console.error('Checkout error:', err);
-      alert('Payment failed. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Payment failed. Please try again.';
+      alert(errorMessage);
     }
   };
 
@@ -313,7 +330,7 @@ export default function ResultsPage() {
                   <p className="text-sm text-gray-400">Unlimited scans</p>
                 </div>
                 <div className="mb-5">
-                  <span className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">$3.99</span>
+                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$3.99</span>
                   <span className="text-gray-400 ml-2">/month</span>
                 </div>
                 <button

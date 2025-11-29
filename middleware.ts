@@ -4,15 +4,16 @@ import { NextResponse } from 'next/server'
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
-  '/api/stripe/webhook',
+  '/api/webhooks/stripe(.*)',
+  '/api/stripe/webhook(.*)',
 ])
 
 export default clerkMiddleware(async (auth, request) => {
-  // Exclure explicitement le webhook Stripe du middleware
-  if (request.nextUrl.pathname === '/api/stripe/webhook') {
+  // Exclure explicitement les webhooks Stripe
+  if (request.nextUrl.pathname.includes('/webhook')) {
     return NextResponse.next();
   }
-
+  
   // Vérifier si la route nécessite une authentification
   if (!isPublicRoute(request)) {
     const { userId } = await auth()
@@ -20,7 +21,6 @@ export default clerkMiddleware(async (auth, request) => {
     // Si l'utilisateur n'est pas authentifié, rediriger vers /sign-in
     if (!userId) {
       const signInUrl = new URL('/sign-in', request.url)
-      // Ajouter l'URL de retour pour rediriger après connexion
       signInUrl.searchParams.set('redirect_url', request.url)
       return NextResponse.redirect(signInUrl)
     }
@@ -29,15 +29,7 @@ export default clerkMiddleware(async (auth, request) => {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (routes API - gérées séparément)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (images, etc.)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)).*)',
   ],
 }
 
