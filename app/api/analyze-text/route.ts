@@ -15,6 +15,11 @@ const openai = new OpenAI({
 
 const TEXT_ANALYSIS_PROMPT = `You are a dating profile expert. Analyze this textual description of a person and identify RED FLAGS.
 
+IMPORTANT SCORING GUIDELINES:
+- 1-2/10: Healthy, legitimate profiles with NO red flags. This should be the DEFAULT for most normal profiles. Only give 1-2 if the description is genuinely clean and shows no concerning patterns.
+- 3-6/10: Moderate red flags - minor concerns like generic descriptions, some clichés, or harmless quirks. These are NOT serious issues.
+- 7-10/10: SERIOUS red flags ONLY - scammers, narcissists, manipulators, dangerous behavior, or multiple major warning signs. Reserve these scores for genuinely problematic profiles.
+
 Common red flags to look for:
 - Claims of extreme success at a very young age (e.g., "CEO at 23")
 - Unrealistic lifestyle claims
@@ -25,9 +30,11 @@ Common red flags to look for:
 - Suspicious behavior patterns
 - Warning signs about personality or character
 
-Return a red flag score from 0-10 (10 = run away immediately) and list specific red flags found with brief, humorous explanations.
+CRITICAL: Most profiles should score 1-2/10. Only use higher scores for REAL problems. Be honest and balanced - don't create false alarms.
 
-Be honest but fair. Format ONLY as valid JSON:
+Return a red flag score from 1-10 and list specific red flags found with brief, humorous explanations. If no red flags are detected, return score 1 and empty redFlags array.
+
+Format ONLY as valid JSON:
 {"score": number, "redFlags": [{"flag": string, "description": string}]}
 
 DO NOT include any markdown, code blocks, or extra text. ONLY return the JSON object.`;
@@ -163,7 +170,7 @@ export async function POST(request: Request) {
         };
       }
 
-      score = Math.max(0, Math.min(10, Number(analysisResult.score) || 0));
+      score = Math.max(1, Math.min(10, Number(analysisResult.score) || 1));
       redFlags = Array.isArray(analysisResult.redFlags)
         ? analysisResult.redFlags
             .filter(

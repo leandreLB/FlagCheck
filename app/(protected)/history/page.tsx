@@ -147,7 +147,7 @@ export default function HistoryPage() {
               <div className="mb-3 flex items-baseline gap-2">
                 <span
                   className={`text-5xl font-black drop-shadow-[0_0_12px_currentColor] ${
-                    scan.score >= 6
+                    scan.score >= 7
                       ? 'bg-gradient-to-br from-red-500 to-red-600 bg-clip-text text-transparent'
                       : scan.score >= 3
                       ? 'bg-gradient-to-br from-orange-500 to-amber-400 bg-clip-text text-transparent'

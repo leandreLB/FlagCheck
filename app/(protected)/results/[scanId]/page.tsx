@@ -58,8 +58,8 @@ export default function ResultsPage() {
           }
         }
 
-        // Trigger confetti if score is 0-2
-        if (data.score >= 0 && data.score <= 2) {
+        // Trigger confetti if score is 1-2 (healthy profile)
+        if (data.score >= 1 && data.score <= 2) {
           setTimeout(() => {
             confetti({
               particleCount: 100,
@@ -81,11 +81,11 @@ export default function ResultsPage() {
   }, [scanId]);
 
   const getStatusMessage = (score: number) => {
-    if (score >= 0 && score <= 2) {
+    if (score >= 1 && score <= 2) {
       return "✅ Green flags only! This one's a keeper";
-    } else if (score >= 3 && score <= 5) {
+    } else if (score >= 3 && score <= 6) {
       return "⚠️ Some concerns, proceed with caution";
-    } else if (score >= 6 && score <= 8) {
+    } else if (score >= 7 && score <= 9) {
       return "🚩 Yikes! Multiple red flags detected";
     } else {
       return "💀 RUN. Abort mission.";
@@ -219,7 +219,7 @@ export default function ResultsPage() {
           {/* Glow effect based on score */}
           <div className={`absolute inset-0 rounded-3xl blur-2xl opacity-50 -z-10 ${
             scan.score >= 7 ? 'bg-red-500/30' : 
-            scan.score >= 4 ? 'bg-orange-500/30' : 
+            scan.score >= 3 ? 'bg-orange-500/30' : 
             'bg-green-500/30'
           }`} />
           
@@ -227,7 +227,7 @@ export default function ResultsPage() {
             <div className="flex items-baseline justify-center gap-2 mb-4">
               <div className={`text-8xl md:text-9xl font-black drop-shadow-[0_0_20px_currentColor] ${
                 scan.score >= 7 ? 'bg-gradient-to-br from-red-500 to-red-600 bg-clip-text text-transparent' :
-                scan.score >= 4 ? 'bg-gradient-to-br from-orange-500 to-amber-400 bg-clip-text text-transparent' :
+                scan.score >= 3 ? 'bg-gradient-to-br from-orange-500 to-amber-400 bg-clip-text text-transparent' :
                 'bg-gradient-to-br from-green-400 to-emerald-500 bg-clip-text text-transparent'
               }`}>
                 {scan.score}
