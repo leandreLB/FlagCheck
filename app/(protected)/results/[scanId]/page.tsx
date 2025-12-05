@@ -330,7 +330,7 @@ export default function ResultsPage() {
           <button
             onClick={handleShare}
             disabled={isSharing}
-            className="w-full rounded-2xl bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 px-6 py-5 font-bold text-white min-h-[64px] transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg shadow-lg shadow-pink-500/30 hover:shadow-pink-500/50"
+            className="w-full rounded-2xl bg-gradient-to-r from-indigo-600/80 to-purple-600/80 backdrop-blur-xl border border-white/10 px-6 py-5 font-bold text-white min-h-[64px] transition-all duration-300 hover:scale-[1.02] hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 glass-card"
           >
             {isSharing ? (
               <>
@@ -339,7 +339,7 @@ export default function ResultsPage() {
               </>
             ) : (
               <>
-                <span className="text-2xl">📤</span>
+                <Share2 className="h-5 w-5" />
                 <span>Share Results</span>
               </>
             )}
@@ -350,7 +350,7 @@ export default function ResultsPage() {
         <div className="flex flex-col sm:flex-row gap-4 animate-slide-up" style={{ animationDelay: '0.5s' }}>
           <button
             onClick={() => router.push('/')}
-            className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 px-6 py-4 font-bold text-white min-h-[56px] transition-all duration-300 hover:scale-105 shadow-lg shadow-indigo-500/20"
+            className="flex-1 rounded-xl bg-black/50 backdrop-blur-xl border border-white/10 px-6 py-4 font-bold text-white min-h-[56px] transition-all duration-300 hover:scale-[1.02] hover:border-white/20 hover:bg-white/5 glass-card"
           >
             Scan Another Profile
           </button>
