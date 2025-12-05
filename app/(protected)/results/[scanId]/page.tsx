@@ -230,7 +230,7 @@ export default function ResultsPage() {
       </div>
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-4 md:px-8 pt-6 md:pt-8 pb-4 animate-slide-up">
+      <div className="relative z-10 flex items-center justify-between px-4 md:px-8 pt-4 md:pt-8 pb-4 animate-slide-up">
         <button
           onClick={() => router.push('/')}
           className="flex items-center gap-2 text-gray-400 transition-all hover:text-white hover:scale-105 p-2 rounded-xl hover:bg-white/5"
@@ -251,7 +251,7 @@ export default function ResultsPage() {
       {/* Main Content */}
       <div className={`relative z-10 flex-1 px-6 pb-8 md:pb-12 w-full transition-all duration-300 ${showPaywall ? 'blur-sm' : ''}`}>
           {/* Score Section - Gauge circulaire */}
-          <div className="mb-8 md:mb-12 lg:mb-16 animate-fade-in">
+          <div className="mb-6 md:mb-12 lg:mb-16 animate-fade-in">
             <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-8 lg:gap-12">
               {/* Gauge circulaire */}
               <div className="flex-shrink-0">
