@@ -230,7 +230,7 @@ export default function ResultsPage() {
       </div>
 
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-4 md:px-8 pt-4 md:pt-8 pb-4 animate-slide-up">
+      <div className="relative z-10 flex items-center justify-between px-4 md:px-8 pt-2 md:pt-8 pb-4 animate-slide-up">
         <button
           onClick={() => router.push('/')}
           className="flex items-center gap-2 text-gray-400 transition-all hover:text-white hover:scale-105 p-2 rounded-xl hover:bg-white/5"

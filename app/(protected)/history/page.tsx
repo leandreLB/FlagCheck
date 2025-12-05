@@ -97,7 +97,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col px-6 py-8 pb-24 md:pb-8 bg-black animate-fade-in">
+    <div className="flex min-h-screen flex-col px-6 pt-4 md:pt-8 pb-24 md:pb-8 bg-black animate-fade-in">
       {/* Header */}
       <div className="mb-8 animate-slide-up">
         <h1 className="mb-2 text-4xl md:text-5xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">

@@ -243,7 +243,7 @@ export default function DescribePage() {
           </p>
         </div>
 
-        <div className="relative z-10 flex flex-1 flex-col items-center justify-center pt-8">
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center pt-2 md:pt-8">
           <div className="w-full max-w-md">
             {/* Subscription Status */}
             {getStatusBadge()}
