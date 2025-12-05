@@ -1,12 +1,13 @@
 import { SignIn } from '@clerk/nextjs';
 
 interface SignInPageProps {
-  searchParams: { redirect_url?: string };
+  searchParams: Promise<{ redirect_url?: string }>;
 }
 
-export default function SignInPage({ searchParams }: SignInPageProps) {
+export default async function SignInPage({ searchParams }: SignInPageProps) {
   // Utiliser l'URL de redirection depuis les paramètres, sinon rediriger vers la page d'accueil
-  const redirectUrl = searchParams.redirect_url || '/';
+  const params = await searchParams;
+  const redirectUrl = params.redirect_url || '/';
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-black px-4">
