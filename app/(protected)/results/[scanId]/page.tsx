@@ -25,7 +25,7 @@ export default function ResultsPage() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
-  const [backgroundVariant, setBackgroundVariant] = useState<number>(0);
+  const [templateVariant, setTemplateVariant] = useState<number>(0);
 
   useEffect(() => {
     const fetchScan = async () => {
@@ -37,8 +37,8 @@ export default function ResultsPage() {
         const data = await response.json();
         setScan(data);
 
-        // Sélectionner un variant de fond aléatoire (0-3)
-        setBackgroundVariant(Math.floor(Math.random() * 4));
+        // Sélectionner un variant de template aléatoire (0-3) pour l'image de partage
+        setTemplateVariant(Math.floor(Math.random() * 4));
 
         // Check subscription status first
         let subscriptionStatus = 'free';
@@ -116,7 +116,7 @@ export default function ResultsPage() {
         score: scan.score,
         redFlags: scan.red_flags,
         top3Flags: top3Flags,
-        templateVariant: backgroundVariant, // Utiliser le même variant que le fond
+        templateVariant: templateVariant,
       });
 
       const imageUrl = URL.createObjectURL(imageBlob);
@@ -212,25 +212,22 @@ export default function ResultsPage() {
 
   const status = getStatusMessage(scan.score);
 
-  // Variants de fond animés
-  const backgroundVariants = [
-    'bg-gradient-to-br from-black via-purple-900/20 to-pink-900/20',
-    'bg-gradient-to-br from-black via-indigo-900/20 to-rose-900/20',
-    'bg-gradient-to-br from-black via-violet-900/20 to-fuchsia-900/20',
-    'bg-gradient-to-br from-black via-pink-900/20 to-purple-900/20',
-  ];
-
   return (
-    <div className={`relative flex min-h-screen flex-col bg-black transition-all duration-1000 ${backgroundVariants[backgroundVariant]}`}>
-      {/* Animated background gradients */}
+    <div className="relative flex min-h-screen flex-col bg-black">
+      {/* Animated background gradients - même style que les autres pages */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-radial opacity-50" />
         <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-gradient-to-tr from-pink-500/10 to-transparent opacity-30" />
-        <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-purple-500/10 to-transparent opacity-20 rounded-full blur-3xl" />
       </div>
 
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-4 md:px-8 pt-2 md:pt-8 pb-4 animate-slide-up">
+      {/* Header avec safe-area pour éviter le chevauchement avec la barre de statut iOS */}
+      <div 
+        className="relative z-10 flex items-center justify-between px-4 md:px-8 pb-4 animate-slide-up"
+        style={{ 
+          paddingTop: 'max(1rem, calc(env(safe-area-inset-top, 0px) + 0.5rem))',
+          minHeight: 'calc(env(safe-area-inset-top, 0px) + 3rem)'
+        }}
+      >
         <button
           onClick={() => router.push('/')}
           className="flex items-center gap-2 text-gray-400 transition-all hover:text-white hover:scale-105 p-2 rounded-xl hover:bg-white/5"
