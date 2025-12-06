@@ -364,7 +364,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="relative flex flex-col overflow-x-hidden w-full">
+    <div className="relative flex flex-col overflow-x-hidden overflow-y-visible w-full">
       {/* Subtle ambient aura effect - very low opacity for premium feel */}
       <div className="fixed inset-0 pointer-events-none z-0">
         {/* Base dark background */}
@@ -403,7 +403,7 @@ export default function HomePage() {
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0 pb-32 md:pb-8">
+      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 animate-fade-in overflow-x-hidden overflow-y-visible w-full max-w-[600px] md:max-w-none mx-auto md:mx-0 pb-32 md:pb-8">
 
         {/* Premium Top Bar - Sticky */}
         <div 
@@ -465,9 +465,10 @@ export default function HomePage() {
         </div>
 
       <div 
-        className="relative z-10 flex flex-1 flex-col items-center justify-center"
+        className="relative z-10 flex flex-col items-center justify-center w-full"
         style={{ 
-          paddingTop: 'max(0.5rem, calc(env(safe-area-inset-top, 0px) + 0.5rem))'
+          paddingTop: 'max(0.5rem, calc(env(safe-area-inset-top, 0px) + 0.5rem))',
+          minHeight: 'auto'
         }}
       >
         <div className="w-full max-w-md md:max-w-lg lg:max-w-xl">

@@ -97,7 +97,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col px-6 pb-32 md:pb-8 bg-black animate-fade-in">
+    <div className="flex min-h-screen flex-col px-6 pb-32 md:pb-8 bg-black animate-fade-in overflow-y-visible">
       {/* Header avec safe-area */}
       <div 
         className="mb-8 animate-slide-up"
