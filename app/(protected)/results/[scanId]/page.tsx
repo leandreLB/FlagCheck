@@ -213,7 +213,7 @@ export default function ResultsPage() {
   const status = getStatusMessage(scan.score);
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-black pb-32 md:pb-8 overflow-y-visible">
+    <div className="relative flex min-h-screen flex-col bg-black pb-48 md:pb-12">
       {/* Animated background gradients - même style que les autres pages */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-radial opacity-50" />
@@ -246,7 +246,7 @@ export default function ResultsPage() {
       </div>
 
       {/* Main Content */}
-      <div className={`relative z-10 flex-1 px-6 w-full transition-all duration-300 overflow-y-visible ${showPaywall ? 'blur-sm' : ''}`}>
+      <div className={`relative z-10 flex-1 px-6 w-full transition-all duration-300 ${showPaywall ? 'blur-sm' : ''}`}>
           {/* Score Section - Gauge circulaire */}
           <div className="mb-6 md:mb-12 lg:mb-16 animate-fade-in">
             <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-8 lg:gap-12">

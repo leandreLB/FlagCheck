@@ -236,7 +236,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col px-6 md:px-8 lg:px-12 pb-32 md:pb-8 bg-black animate-fade-in max-w-[600px] md:max-w-none mx-auto md:mx-0 overflow-y-visible">
+    <div className="flex min-h-screen flex-col px-6 md:px-8 lg:px-12 pb-48 md:pb-8 bg-black animate-fade-in max-w-[600px] md:max-w-none mx-auto md:mx-0">
       {/* Safe-area padding pour le haut */}
       <div 
         className="mb-8 animate-slide-up"
