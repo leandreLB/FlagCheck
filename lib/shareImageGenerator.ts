@@ -217,45 +217,135 @@ async function drawCommonElements(
   const minSpaceBeforeQr = 40; // Espace minimum avant le QR code
   const maxFlagsAreaEnd = textAboveQrY - minSpaceBeforeQr; // Zone maximale pour les flags
 
-  // Top 3 red flags - avec calcul dynamique de l'espace disponible
-  const flagsStartY = scoreY + 280;
-  const maxFlags = Math.min(3, data.top3Flags.length);
-  
-  // Calculer l'espace disponible pour les flags
-  const availableHeight = maxFlagsAreaEnd - flagsStartY;
-  const flagSpacing = Math.min(70, Math.floor(availableHeight / (maxFlags + 1))); // Espacement adaptatif
-  const fontSize = Math.min(28, Math.floor(flagSpacing * 0.4)); // Taille de police adaptative
-
-  ctx.font = `${fontSize}px "Inter", system-ui, -apple-system, sans-serif`;
-  ctx.textAlign = 'left';
-
-  for (let i = 0; i < maxFlags; i++) {
-    const flag = data.top3Flags[i];
-    const y = flagsStartY + i * flagSpacing;
-    
-    // Vérifier que le flag ne dépasse pas la zone réservée
-    if (y + fontSize > maxFlagsAreaEnd) {
-      break; // Arrêter si on dépasse
+  // Phrases drôles selon le score
+  const getFunnyPhrases = (score: number): string[] => {
+    if (score >= 1 && score <= 3) {
+      return [
+        "This profile is cleaner than my browser history! 🧹",
+        "Green flags everywhere! 🌱",
+        "No red flags detected. Suspiciously clean... 🤔",
+        "This person seems... normal? 🎯",
+        "All clear! Proceed with caution anyway 😎"
+      ];
+    } else if (score >= 4 && score <= 6) {
+      return [
+        "Some red flags, but nothing a therapist can't fix 🚩",
+        "Warning: Proceed with caution ⚠️",
+        "Mixed signals detected 📡",
+        "Not terrible, but not great either 🤷",
+        "Yellow flags turning red... 🟡➡️🔴"
+      ];
+    } else if (score >= 7 && score <= 9) {
+      return [
+        "Run. Just run. 🏃💨",
+        "More red flags than a bullfighting arena 🚩🚩🚩",
+        "This profile is a walking red flag 🚩",
+        "Warning: High risk of drama ahead ⚠️",
+        "Multiple red flags detected. Abort mission! 🚨"
+      ];
+    } else {
+      return [
+        "10/10 red flags. This is a masterpiece of red flags 🎨🚩",
+        "Maximum red flags achieved! 🏆🚩",
+        "This profile broke the red flag counter 💥",
+        "10/10 would not recommend ❌",
+        "All red flags unlocked! Achievement unlocked 🎮🚩"
+      ];
     }
+  };
+
+  // Décider aléatoirement : afficher les red flags ou une phrase drôle
+  const showFunnyPhrase = Math.random() > 0.5; // 50% de chance
+  const contentStartY = scoreY + 280;
+  
+  if (showFunnyPhrase && data.top3Flags.length > 0) {
+    // Afficher une phrase drôle
+    const phrases = getFunnyPhrases(data.score);
+    const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
     
-    const x = size / 2 - 200;
-
-    // Emoji drapeau
-    ctx.font = `${fontSize - 2}px Arial`;
-    ctx.fillText('🚩', x, y);
-
-    // Texte du flag (tronqué si trop long)
+    // Calculer l'espace disponible
+    const availableHeight = maxFlagsAreaEnd - contentStartY;
+    const maxFontSize = Math.min(36, Math.floor(availableHeight * 0.15));
+    const fontSize = Math.max(24, maxFontSize);
+    
     ctx.font = `bold ${fontSize}px "Inter", system-ui, -apple-system, sans-serif`;
     ctx.fillStyle = accentColor;
-    const maxWidth = 380;
-    let flagText = flag.flag;
-    if (ctx.measureText(flagText).width > maxWidth) {
-      while (ctx.measureText(flagText + '...').width > maxWidth && flagText.length > 0) {
-        flagText = flagText.slice(0, -1);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    
+    // Découper la phrase en plusieurs lignes si nécessaire
+    const maxWidth = size - padding * 2;
+    const words = randomPhrase.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+    
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const metrics = ctx.measureText(testLine);
+      
+      if (metrics.width > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
       }
-      flagText += '...';
     }
-    ctx.fillText(flagText, x + 40, y);
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    
+    // Dessiner les lignes
+    const lineHeight = fontSize * 1.3;
+    const totalHeight = lines.length * lineHeight;
+    const startY = contentStartY + (availableHeight - totalHeight) / 2;
+    
+    lines.forEach((line, index) => {
+      const y = startY + index * lineHeight;
+      if (y + fontSize <= maxFlagsAreaEnd) {
+        ctx.fillText(line, size / 2, y);
+      }
+    });
+  } else {
+    // Afficher les top red flags (code original)
+    const flagsStartY = contentStartY;
+    const maxFlags = Math.min(3, data.top3Flags.length);
+    
+    // Calculer l'espace disponible pour les flags
+    const availableHeight = maxFlagsAreaEnd - flagsStartY;
+    const flagSpacing = Math.min(70, Math.floor(availableHeight / (maxFlags + 1))); // Espacement adaptatif
+    const fontSize = Math.min(28, Math.floor(flagSpacing * 0.4)); // Taille de police adaptative
+
+    ctx.font = `${fontSize}px "Inter", system-ui, -apple-system, sans-serif`;
+    ctx.textAlign = 'left';
+
+    for (let i = 0; i < maxFlags; i++) {
+      const flag = data.top3Flags[i];
+      const y = flagsStartY + i * flagSpacing;
+      
+      // Vérifier que le flag ne dépasse pas la zone réservée
+      if (y + fontSize > maxFlagsAreaEnd) {
+        break; // Arrêter si on dépasse
+      }
+      
+      const x = size / 2 - 200;
+
+      // Emoji drapeau
+      ctx.font = `${fontSize - 2}px Arial`;
+      ctx.fillText('🚩', x, y);
+
+      // Texte du flag (tronqué si trop long)
+      ctx.font = `bold ${fontSize}px "Inter", system-ui, -apple-system, sans-serif`;
+      ctx.fillStyle = accentColor;
+      const maxWidth = 380;
+      let flagText = flag.flag;
+      if (ctx.measureText(flagText).width > maxWidth) {
+        while (ctx.measureText(flagText + '...').width > maxWidth && flagText.length > 0) {
+          flagText = flagText.slice(0, -1);
+        }
+        flagText += '...';
+      }
+      ctx.fillText(flagText, x + 40, y);
+    }
   }
 
   // Texte "Scanned with FlagCheck" (dessiné avant le QR code pour être en dessous)
