@@ -246,7 +246,7 @@ export default function ResultsPage() {
       </div>
 
       {/* Main Content */}
-      <div className={`relative z-10 flex-1 px-6 pb-8 md:pb-12 w-full transition-all duration-300 ${showPaywall ? 'blur-sm' : ''}`}>
+      <div className={`relative z-10 flex-1 px-6 pb-32 md:pb-12 w-full transition-all duration-300 ${showPaywall ? 'blur-sm' : ''}`}>
           {/* Score Section - Gauge circulaire */}
           <div className="mb-6 md:mb-12 lg:mb-16 animate-fade-in">
             <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-8 lg:gap-12">

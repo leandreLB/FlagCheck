@@ -403,10 +403,16 @@ export default function HomePage() {
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 py-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0">
+      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-32 md:pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0">
 
         {/* Premium Top Bar - Sticky */}
-        <div className="sticky top-0 z-50 mb-0 -mx-6 md:-mx-8 lg:-mx-12 px-6 md:px-8 lg:px-12 pt-4">
+        <div 
+          className="sticky top-0 z-50 mb-0 -mx-6 md:-mx-8 lg:-mx-12 px-6 md:px-8 lg:px-12"
+          style={{ 
+            paddingTop: 'max(1rem, calc(env(safe-area-inset-top, 0px) + 0.5rem))',
+            minHeight: 'calc(env(safe-area-inset-top, 0px) + 4rem)'
+          }}
+        >
           <div className="mx-auto max-w-[600px] md:max-w-none">
             <div className="flex h-[60px] items-center justify-between rounded-2xl border border-white/5 bg-black/40 backdrop-blur-[20px] px-5 shadow-lg">
               {/* Left: Logo */}
@@ -458,7 +464,12 @@ export default function HomePage() {
           </p>
         </div>
 
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center pt-2 md:pt-8">
+      <div 
+        className="relative z-10 flex flex-1 flex-col items-center justify-center"
+        style={{ 
+          paddingTop: 'max(0.5rem, calc(env(safe-area-inset-top, 0px) + 0.5rem))'
+        }}
+      >
         <div className="w-full max-w-md md:max-w-lg lg:max-w-xl">
           {/* Subscription Status */}
           {getStatusBadge()}

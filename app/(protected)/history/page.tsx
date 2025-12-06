@@ -97,9 +97,15 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col px-6 pt-4 md:pt-8 pb-24 md:pb-8 bg-black animate-fade-in">
-      {/* Header */}
-      <div className="mb-8 animate-slide-up">
+    <div className="flex min-h-screen flex-col px-6 pb-32 md:pb-8 bg-black animate-fade-in">
+      {/* Header avec safe-area */}
+      <div 
+        className="mb-8 animate-slide-up"
+        style={{ 
+          paddingTop: 'max(1rem, calc(env(safe-area-inset-top, 0px) + 0.5rem))',
+          minHeight: 'calc(env(safe-area-inset-top, 0px) + 3rem)'
+        }}
+      >
         <h1 className="mb-2 text-4xl md:text-5xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
           History
         </h1>
