@@ -35,7 +35,7 @@ html {
   transition: background-color 0.3s ease;
   /* Smooth scrolling like Instagram */
   scroll-behavior: smooth;
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: none;
   overscroll-behavior-x: none;
   /* Prevent white flash on load */
   min-height: 100%;
@@ -68,12 +68,14 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   width: 100%;
-  /* Smooth scrolling like Instagram - natural bounce on mobile, smooth on desktop */
+  /* Smooth scrolling like Instagram - no bounce effect */
   scroll-behavior: smooth;
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: none;
   overscroll-behavior-x: none;
   /* Smooth momentum scrolling on iOS - allows natural scroll without holding finger */
   -webkit-overflow-scrolling: touch;
+  /* Prevent pull-to-refresh and bounce on mobile */
+  overscroll-behavior: none;
 }
 
 /* Background radial gradients */

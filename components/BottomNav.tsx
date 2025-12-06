@@ -15,7 +15,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-black/80 backdrop-blur-2xl">
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] border-t border-white/10 bg-black/80 backdrop-blur-2xl" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' }}>
       {/* Glow effect at top */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-primary opacity-50" />
       
