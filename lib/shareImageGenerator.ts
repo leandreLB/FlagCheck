@@ -258,7 +258,8 @@ async function drawCommonElements(
   const showFunnyPhrase = Math.random() > 0.5; // 50% de chance
   const contentStartY = scoreY + 280;
   
-  if (showFunnyPhrase && data.top3Flags.length > 0) {
+  // Afficher une phrase drôle si décidé aléatoirement (même s'il n'y a pas de red flags)
+  if (showFunnyPhrase) {
     // Afficher une phrase drôle
     const phrases = getFunnyPhrases(data.score);
     const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];

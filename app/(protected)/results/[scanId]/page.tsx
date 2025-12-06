@@ -202,14 +202,39 @@ export default function ResultsPage() {
     }
   };
 
-  const handleDownloadImage = () => {
+  const handleDownloadImage = async () => {
     if (!shareImageBlob) return;
     
+    // Sur mobile, utiliser Web Share API pour sauvegarder dans la galerie
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (navigator.share && isMobile) {
+      try {
+        const file = new File([shareImageBlob], 'flagcheck-results.png', {
+          type: 'image/png',
+        });
+        
+        await navigator.share({
+          title: 'FlagCheck Results',
+          files: [file],
+        });
+        return;
+      } catch (error) {
+        // Si l'utilisateur annule ou erreur, continuer avec le téléchargement classique
+        if ((error as Error).name === 'AbortError') {
+          return;
+        }
+      }
+    }
+    
+    // Téléchargement classique pour desktop ou fallback
     const url = URL.createObjectURL(shareImageBlob);
     const a = document.createElement('a');
     a.href = url;
     a.download = 'flagcheck-results.png';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 

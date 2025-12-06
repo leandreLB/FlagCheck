@@ -63,7 +63,31 @@ export default function ShareModal({
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    if (!imageBlob) return;
+    
+    // Sur mobile, utiliser Web Share API pour sauvegarder dans la galerie
+    if (navigator.share && isMobile) {
+      try {
+        const file = new File([imageBlob], 'flagcheck-results.png', {
+          type: 'image/png',
+        });
+        
+        await navigator.share({
+          title: 'FlagCheck Results',
+          files: [file],
+        });
+        onClose();
+        return;
+      } catch (error) {
+        // Si l'utilisateur annule, ne rien faire
+        if ((error as Error).name === 'AbortError') {
+          return;
+        }
+      }
+    }
+    
+    // Téléchargement classique pour desktop ou fallback
     onDownload();
     onClose();
   };
