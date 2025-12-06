@@ -73,6 +73,75 @@ export default function ResultsPage() {
             });
           }, 500);
         }
+
+        // Trigger dramatic animation if score is 10 (worst case - many red flags)
+        if (data.score === 10) {
+          setTimeout(() => {
+            // Animation dramatique avec confetti rouge/noir
+            const duration = 3000;
+            const end = Date.now() + duration;
+
+            const interval = setInterval(() => {
+              if (Date.now() > end) {
+                clearInterval(interval);
+                return;
+              }
+
+              // Confetti rouge vif depuis plusieurs points
+              confetti({
+                particleCount: 50,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0.2, y: 0.5 },
+                colors: ['#EF4444', '#DC2626', '#B91C1C', '#991B1B'],
+                startVelocity: 45,
+              });
+
+              confetti({
+                particleCount: 50,
+                angle: 120,
+                spread: 55,
+                origin: { x: 0.8, y: 0.5 },
+                colors: ['#EF4444', '#DC2626', '#B91C1C', '#991B1B'],
+                startVelocity: 45,
+              });
+
+              // Confetti noir depuis le centre
+              confetti({
+                particleCount: 30,
+                spread: 80,
+                origin: { x: 0.5, y: 0.4 },
+                colors: ['#000000', '#1F1F1F', '#0A0A0A'],
+                startVelocity: 50,
+              });
+
+              // Explosion depuis le haut
+              confetti({
+                particleCount: 25,
+                angle: 90,
+                spread: 60,
+                origin: { x: 0.5, y: 0.1 },
+                colors: ['#EF4444', '#DC2626', '#000000'],
+                startVelocity: 55,
+                gravity: 0.8,
+              });
+            }, 50);
+
+            // Animation finale explosive après 1 seconde
+            setTimeout(() => {
+              confetti({
+                particleCount: 200,
+                spread: 100,
+                origin: { x: 0.5, y: 0.5 },
+                colors: ['#EF4444', '#DC2626', '#B91C1C', '#000000', '#1F1F1F'],
+                startVelocity: 60,
+                gravity: 0.5,
+                decay: 0.9,
+                ticks: 200,
+              });
+            }, 1000);
+          }, 500);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {

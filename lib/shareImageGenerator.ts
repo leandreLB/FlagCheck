@@ -208,25 +208,44 @@ async function drawCommonElements(
   ctx.font = 'bold 56px "Inter", system-ui, -apple-system, sans-serif';
   ctx.fillText('RED FLAGS', size / 2, scoreY + 200);
 
-  // Top 3 red flags
-  const flagsStartY = scoreY + 280;
-  const flagSpacing = 70;
-  const maxFlags = Math.min(3, data.top3Flags.length);
+  // QR Code et texte en bas - définir d'abord pour calculer l'espace disponible
+  const bottomY = size - 200;
+  const qrSize = 120;
+  const qrX = size / 2 - qrSize / 2;
+  const qrY = bottomY - qrSize - 20;
+  const textAboveQrY = qrY - 10;
+  const minSpaceBeforeQr = 40; // Espace minimum avant le QR code
+  const maxFlagsAreaEnd = textAboveQrY - minSpaceBeforeQr; // Zone maximale pour les flags
 
-  ctx.font = '32px "Inter", system-ui, -apple-system, sans-serif';
+  // Top 3 red flags - avec calcul dynamique de l'espace disponible
+  const flagsStartY = scoreY + 280;
+  const maxFlags = Math.min(3, data.top3Flags.length);
+  
+  // Calculer l'espace disponible pour les flags
+  const availableHeight = maxFlagsAreaEnd - flagsStartY;
+  const flagSpacing = Math.min(70, Math.floor(availableHeight / (maxFlags + 1))); // Espacement adaptatif
+  const fontSize = Math.min(28, Math.floor(flagSpacing * 0.4)); // Taille de police adaptative
+
+  ctx.font = `${fontSize}px "Inter", system-ui, -apple-system, sans-serif`;
   ctx.textAlign = 'left';
 
   for (let i = 0; i < maxFlags; i++) {
     const flag = data.top3Flags[i];
     const y = flagsStartY + i * flagSpacing;
+    
+    // Vérifier que le flag ne dépasse pas la zone réservée
+    if (y + fontSize > maxFlagsAreaEnd) {
+      break; // Arrêter si on dépasse
+    }
+    
     const x = size / 2 - 200;
 
     // Emoji drapeau
-    ctx.font = '28px Arial';
+    ctx.font = `${fontSize - 2}px Arial`;
     ctx.fillText('🚩', x, y);
 
     // Texte du flag (tronqué si trop long)
-    ctx.font = 'bold 28px "Inter", system-ui, -apple-system, sans-serif';
+    ctx.font = `bold ${fontSize}px "Inter", system-ui, -apple-system, sans-serif`;
     ctx.fillStyle = accentColor;
     const maxWidth = 380;
     let flagText = flag.flag;
@@ -238,12 +257,6 @@ async function drawCommonElements(
     }
     ctx.fillText(flagText, x + 40, y);
   }
-
-  // QR Code et texte en bas
-  const bottomY = size - 200;
-  const qrSize = 120;
-  const qrX = size / 2 - qrSize / 2;
-  const qrY = bottomY - qrSize - 20;
 
   // Texte "Scanned with FlagCheck" (dessiné avant le QR code pour être en dessous)
   ctx.fillStyle = textColor;
