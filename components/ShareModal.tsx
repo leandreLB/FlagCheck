@@ -66,28 +66,32 @@ export default function ShareModal({
   const handleDownload = async () => {
     if (!imageBlob) return;
     
-    // Sur mobile, utiliser Web Share API pour sauvegarder dans la galerie
-    if (navigator.share && isMobile) {
-      try {
-        const file = new File([imageBlob], 'flagcheck-results.png', {
-          type: 'image/png',
-        });
-        
-        await navigator.share({
-          title: 'FlagCheck Results',
-          files: [file],
-        });
+    // Sur mobile, ouvrir l'image dans un nouvel onglet pour permettre "Enregistrer l'image"
+    if (isMobile) {
+      const url = URL.createObjectURL(imageBlob);
+      
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        // Pour iOS, ouvrir dans un nouvel onglet - l'utilisateur peut faire un appui long pour enregistrer
+        const newWindow = window.open(url, '_blank');
+        if (!newWindow) {
+          // Si popup bloquée, utiliser le téléchargement classique
+          onDownload();
+        } else {
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1000);
+        }
         onClose();
         return;
-      } catch (error) {
-        // Si l'utilisateur annule, ne rien faire
-        if ((error as Error).name === 'AbortError') {
-          return;
-        }
+      } else {
+        // Pour Android, utiliser le téléchargement direct
+        onDownload();
+        onClose();
+        return;
       }
     }
     
-    // Téléchargement classique pour desktop ou fallback
+    // Téléchargement classique pour desktop
     onDownload();
     onClose();
   };

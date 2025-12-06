@@ -270,7 +270,10 @@ async function drawCommonElements(
     const fontSize = Math.max(24, maxFontSize);
     
     ctx.font = `bold ${fontSize}px "Inter", system-ui, -apple-system, sans-serif`;
-    ctx.fillStyle = accentColor;
+    // Utiliser blanc avec ombre pour meilleur contraste
+    ctx.fillStyle = '#FFFFFF';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     
@@ -303,6 +306,8 @@ async function drawCommonElements(
     lines.forEach((line, index) => {
       const y = startY + index * lineHeight;
       if (y + fontSize <= maxFlagsAreaEnd) {
+        // Dessiner l'ombre (contour noir) puis le texte blanc pour meilleur contraste
+        ctx.strokeText(line, size / 2, y);
         ctx.fillText(line, size / 2, y);
       }
     });

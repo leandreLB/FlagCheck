@@ -205,29 +205,46 @@ export default function ResultsPage() {
   const handleDownloadImage = async () => {
     if (!shareImageBlob) return;
     
-    // Sur mobile, utiliser Web Share API pour sauvegarder dans la galerie
+    // Sur mobile, créer un lien de téléchargement qui fonctionne mieux
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    if (navigator.share && isMobile) {
-      try {
-        const file = new File([shareImageBlob], 'flagcheck-results.png', {
-          type: 'image/png',
-        });
-        
-        await navigator.share({
-          title: 'FlagCheck Results',
-          files: [file],
-        });
-        return;
-      } catch (error) {
-        // Si l'utilisateur annule ou erreur, continuer avec le téléchargement classique
-        if ((error as Error).name === 'AbortError') {
-          return;
+    if (isMobile) {
+      // Pour mobile, utiliser un lien avec download qui ouvre le menu de partage
+      const url = URL.createObjectURL(shareImageBlob);
+      
+      // Créer un lien temporaire
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'flagcheck-results.png';
+      link.style.display = 'none';
+      
+      // Pour iOS, essayer d'ouvrir dans un nouvel onglet pour permettre "Enregistrer l'image"
+      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        // Ouvrir l'image dans un nouvel onglet pour permettre "Enregistrer l'image"
+        const newWindow = window.open(url, '_blank');
+        if (newWindow) {
+          // L'utilisateur peut faire un appui long pour enregistrer
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1000);
+        } else {
+          // Fallback: utiliser le lien de téléchargement
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(url), 100);
         }
+      } else {
+        // Pour Android, utiliser le lien de téléchargement
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 100);
       }
+      return;
     }
     
-    // Téléchargement classique pour desktop ou fallback
+    // Téléchargement classique pour desktop
     const url = URL.createObjectURL(shareImageBlob);
     const a = document.createElement('a');
     a.href = url;
