@@ -213,7 +213,7 @@ export default function ResultsPage() {
   const status = getStatusMessage(scan.score);
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-black pb-48 md:pb-12">
+    <div className="relative flex min-h-screen flex-col bg-black pb-32 md:pb-12" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
       {/* Animated background gradients - même style que les autres pages */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-radial opacity-50" />
@@ -323,7 +323,7 @@ export default function ResultsPage() {
         </div>
 
         {/* Share Button - Gros bouton viral */}
-        <div className="mb-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+        <div className="mb-8 md:mb-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
           <button
             onClick={handleShare}
             disabled={isSharing}

@@ -97,7 +97,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col px-6 pb-48 md:pb-8 bg-black animate-fade-in">
+    <div className="flex min-h-screen flex-col px-6 md:pb-8 bg-black animate-fade-in" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
       {/* Header avec safe-area */}
       <div 
         className="mb-8 animate-slide-up"
@@ -136,7 +136,7 @@ export default function HistoryPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
           {scans.map((scan, index) => (
             <button
               key={scan.id}
