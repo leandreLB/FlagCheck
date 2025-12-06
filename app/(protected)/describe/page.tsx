@@ -193,7 +193,7 @@ export default function DescribePage() {
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-32 md:pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0">
+      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0 pb-32 md:pb-8">
         {/* Premium Top Bar - Sticky */}
         <div 
           className="sticky top-0 z-50 mb-0 -mx-6 md:-mx-8 lg:-mx-12 px-6 md:px-8 lg:px-12"
