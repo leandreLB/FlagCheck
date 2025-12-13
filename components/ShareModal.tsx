@@ -66,32 +66,31 @@ export default function ShareModal({
   const handleDownload = async () => {
     if (!imageBlob) return;
     
-    // Sur mobile, ouvrir l'image dans un nouvel onglet pour permettre "Enregistrer l'image"
-    if (isMobile) {
-      const url = URL.createObjectURL(imageBlob);
-      
-      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        // Pour iOS, ouvrir dans un nouvel onglet - l'utilisateur peut faire un appui long pour enregistrer
-        const newWindow = window.open(url, '_blank');
-        if (!newWindow) {
-          // Si popup bloquée, utiliser le téléchargement classique
-          onDownload();
-        } else {
-          setTimeout(() => {
-            URL.revokeObjectURL(url);
-          }, 1000);
+    // Sur mobile, utiliser Web Share API qui permet de sauvegarder dans la galerie
+    if (isMobile && navigator.share) {
+      try {
+        const file = new File([imageBlob], 'flagcheck-results.png', {
+          type: 'image/png',
+        });
+        
+        // Web Share API avec fichier - ouvre le menu natif où l'utilisateur peut choisir "Enregistrer l'image"
+        await navigator.share({
+          title: 'FlagCheck Results',
+          text: `Just scanned a dating profile and found ${score}/10 red flags 🚩`,
+          files: [file],
+        });
+        onClose();
+        return;
+      } catch (error) {
+        // Si l'utilisateur annule ou si l'API n'est pas supportée, continuer avec le téléchargement classique
+        if ((error as Error).name === 'AbortError') {
+          return;
         }
-        onClose();
-        return;
-      } else {
-        // Pour Android, utiliser le téléchargement direct
-        onDownload();
-        onClose();
-        return;
+        // Fallback sur téléchargement classique
       }
     }
     
-    // Téléchargement classique pour desktop
+    // Téléchargement classique pour desktop ou fallback
     onDownload();
     onClose();
   };

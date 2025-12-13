@@ -205,46 +205,32 @@ export default function ResultsPage() {
   const handleDownloadImage = async () => {
     if (!shareImageBlob) return;
     
-    // Sur mobile, créer un lien de téléchargement qui fonctionne mieux
+    // Sur mobile, utiliser Web Share API qui permet de sauvegarder dans la galerie
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    if (isMobile) {
-      // Pour mobile, utiliser un lien avec download qui ouvre le menu de partage
-      const url = URL.createObjectURL(shareImageBlob);
-      
-      // Créer un lien temporaire
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'flagcheck-results.png';
-      link.style.display = 'none';
-      
-      // Pour iOS, essayer d'ouvrir dans un nouvel onglet pour permettre "Enregistrer l'image"
-      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        // Ouvrir l'image dans un nouvel onglet pour permettre "Enregistrer l'image"
-        const newWindow = window.open(url, '_blank');
-        if (newWindow) {
-          // L'utilisateur peut faire un appui long pour enregistrer
-          setTimeout(() => {
-            URL.revokeObjectURL(url);
-          }, 1000);
-        } else {
-          // Fallback: utiliser le lien de téléchargement
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          setTimeout(() => URL.revokeObjectURL(url), 100);
+    if (isMobile && navigator.share) {
+      try {
+        const file = new File([shareImageBlob], 'flagcheck-results.png', {
+          type: 'image/png',
+        });
+        
+        // Web Share API avec fichier - ouvre le menu natif où l'utilisateur peut choisir "Enregistrer l'image"
+        await navigator.share({
+          title: 'FlagCheck Results',
+          text: `Just scanned a dating profile and found ${scan?.score || 0}/10 red flags 🚩`,
+          files: [file],
+        });
+        return;
+      } catch (error) {
+        // Si l'utilisateur annule, ne rien faire
+        if ((error as Error).name === 'AbortError') {
+          return;
         }
-      } else {
-        // Pour Android, utiliser le lien de téléchargement
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 100);
+        // Sinon, continuer avec le téléchargement classique
       }
-      return;
     }
     
-    // Téléchargement classique pour desktop
+    // Téléchargement classique pour desktop ou fallback
     const url = URL.createObjectURL(shareImageBlob);
     const a = document.createElement('a');
     a.href = url;
@@ -514,7 +500,7 @@ export default function ResultsPage() {
                   <p className="text-sm text-gray-400">Unlimited scans</p>
                 </div>
                 <div className="mb-5">
-                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$3.99</span>
+                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$6.99</span>
                   <span className="text-gray-400 ml-2">/month</span>
                 </div>
                 <button
@@ -526,14 +512,20 @@ export default function ResultsPage() {
               </div>
 
               {/* Lifetime Plan */}
-              <div className="rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-6 glass-card">
+              <div className="relative rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-6 glass-card">
+                <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-pink-500/80 to-purple-500/80 px-3 py-1 text-xs font-bold text-white shadow-glow-sm">
+                  Best value
+                </div>
                 <div className="mb-3">
                   <h3 className="mb-1 text-2xl font-bold text-white">Lifetime</h3>
                   <p className="text-sm text-gray-400">Lifetime access</p>
                 </div>
-                <div className="mb-5">
-                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$24.99</span>
+                <div className="mb-2">
+                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$49.99</span>
                   <span className="text-gray-400 ml-2">one-time</span>
+                </div>
+                <div className="mb-5">
+                  <span className="text-sm text-gray-500 line-through">Normally $79.99</span>
                 </div>
                 <button
                   onClick={() => handleCheckout('lifetime')}

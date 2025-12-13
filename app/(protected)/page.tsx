@@ -365,17 +365,22 @@ export default function HomePage() {
 
   return (
     <div className="relative flex flex-col overflow-x-hidden overflow-y-visible w-full">
-      {/* Subtle ambient aura effect - very low opacity for premium feel */}
+      {/* Background with violet reflections */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        {/* Base dark background */}
-        <div className="absolute inset-0 bg-black" />
+        {/* Base dark background with violet tint */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
         
-        {/* Subtle particle effect - tiny dots */}
-        <div className="absolute inset-0 opacity-[0.03]">
-          {[...Array(50)].map((_, i) => (
+        {/* Violet reflections - multiple layers */}
+        <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-gradient-radial from-purple-600/20 via-purple-700/10 to-transparent blur-[150px] opacity-60" />
+        <div className="absolute bottom-0 right-1/4 w-[700px] h-[700px] bg-gradient-radial from-purple-500/15 via-purple-600/8 to-transparent blur-[140px] opacity-50" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-gradient-radial from-purple-700/25 via-purple-800/15 to-transparent blur-[180px] opacity-40" />
+        
+        {/* Subtle particle effect - reduced */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          {[...Array(30)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-1 h-1 bg-white rounded-full animate-particle-float"
+              className="absolute w-1 h-1 bg-purple-300/30 rounded-full animate-particle-float"
               style={{
                 left: `${(i * 7.2) % 100}%`,
                 top: `${(i * 11.3) % 100}%`,
@@ -384,21 +389,6 @@ export default function HomePage() {
               }}
             />
           ))}
-        </div>
-        
-        {/* Primary subtle ambient aura - centered behind hero section */}
-        <div className="absolute top-[180px] left-1/2 -translate-x-1/2 w-[1400px] h-[1400px] animate-ambient-aura">
-          <div className="absolute inset-0 bg-gradient-radial-aura blur-[120px]" />
-        </div>
-        
-        {/* Secondary subtle glow - offset for depth */}
-        <div className="absolute top-1/3 right-1/4 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] animate-ambient-aura-secondary">
-          <div className="absolute inset-0 bg-gradient-radial-aura-secondary blur-[100px]" />
-        </div>
-        
-        {/* Tertiary subtle glow - opposite side for balance */}
-        <div className="absolute bottom-1/3 left-1/4 translate-x-1/2 translate-y-1/2 w-[900px] h-[900px] animate-ambient-aura-tertiary">
-          <div className="absolute inset-0 bg-gradient-radial-aura blur-[110px]" />
         </div>
       </div>
 
@@ -475,27 +465,33 @@ export default function HomePage() {
           {/* Subscription Status */}
           {getStatusBadge()}
 
-          {/* Upload zone - Enhanced with depth and animations */}
+          {/* Upload zone - Premium Glassmorphism with Smooth Animations */}
           <div className="group relative mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            {/* Multi-layer glow effects */}
-            <div className={`absolute -inset-1 rounded-3xl bg-gradient-primary blur-3xl transition-all duration-500 ${
-              isDragging ? 'opacity-70 scale-110' : 'opacity-40 group-hover:opacity-60 animate-pulse-glow'
+            {/* Reduced premium glow effects */}
+            <div className={`absolute -inset-2 rounded-[2rem] bg-gradient-primary blur-3xl transition-all duration-500 ease-out ${
+              isDragging ? 'opacity-50 scale-110' : 'opacity-30 group-hover:opacity-40'
             }`} />
-            <div className={`absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-indigo-500/20 via-pink-500/20 to-indigo-500/20 blur-xl transition-all duration-500 ${
-              isDragging ? 'opacity-50' : 'opacity-30 group-hover:opacity-40'
+            <div className={`absolute -inset-1.5 rounded-[2rem] bg-gradient-to-r from-indigo-500/25 via-pink-500/25 to-indigo-500/25 blur-2xl transition-all duration-500 ease-out ${
+              isDragging ? 'opacity-40' : 'opacity-25 group-hover:opacity-30'
+            }`} />
+            <div className={`absolute -inset-1 rounded-[2rem] bg-gradient-to-br from-indigo-500/20 via-pink-500/20 to-purple-500/20 blur-xl transition-all duration-500 ease-out ${
+              isDragging ? 'opacity-30' : 'opacity-20 group-hover:opacity-25'
             }`} />
             
-            {/* Main container with layered shadows */}
+            {/* Premium glassmorphism container */}
             <div
-              className={`relative rounded-3xl border-2 border-dashed p-12 backdrop-blur-xl transition-all duration-500 min-h-[320px] flex items-center justify-center ${
+                  className={`relative rounded-[2rem] border-2 border-dashed p-10 sm:p-12 md:p-14 backdrop-blur-2xl transition-all duration-500 ease-out min-h-[360px] flex items-center justify-center overflow-hidden ${
                 isDragging
-                  ? 'border-indigo-500 bg-indigo-600/20 shadow-[0_0_60px_rgba(99,102,241,0.6),0_0_100px_rgba(236,72,153,0.4)] scale-[1.02]'
-                  : 'border-white/20 bg-black/40 glass-card shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.05),inset_0_1px_0_rgba(255,255,255,0.1)] group-hover:shadow-[0_12px_48px_rgba(0,0,0,0.5),0_0_0_1px_rgba(99,102,241,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] group-hover:-translate-y-1'
+                  ? 'border-indigo-400/60 bg-gradient-to-br from-indigo-500/20 via-indigo-500/12 to-pink-500/15 shadow-[0_0_50px_rgba(99,102,241,0.5),0_0_80px_rgba(236,72,153,0.4)] scale-[1.02]'
+                  : 'border-white/30 bg-gradient-to-br from-black/60 via-black/50 to-black/60 shadow-[0_15px_40px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.08),inset_0_1px_15px_rgba(255,255,255,0.06)] group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_2px_rgba(99,102,241,0.2),inset_0_1px_20px_rgba(255,255,255,0.08)] group-hover:-translate-y-1 group-hover:scale-[1.01]'
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
+              {/* Subtle inner glow effect - reduced */}
+              <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-indigo-500/5 via-transparent to-pink-500/5 opacity-0 group-hover:opacity-50 transition-opacity duration-500 pointer-events-none" />
+              
               <input
                 ref={fileInputRef}
                 type="file"
@@ -511,67 +507,140 @@ export default function HomePage() {
                 onChange={handleCameraInputChange}
                 className="hidden"
               />
-              <div className="flex flex-col items-center gap-6 w-full">
+              <div className="flex flex-col items-center gap-8 w-full relative z-10">
+                {/* Premium Camera Icon with enhanced animations */}
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-primary rounded-full blur-2xl opacity-50 group-hover:opacity-70 animate-pulse-glow" />
-                  <div className="relative rounded-full bg-gradient-primary p-6 shadow-[0_0_30px_rgba(99,102,241,0.6),0_0_60px_rgba(236,72,153,0.4)] group-hover:scale-110 transition-all duration-500">
-                    <Camera className="h-12 w-12 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                  {/* Reduced icon glow */}
+                  <div className="absolute inset-0 bg-gradient-primary rounded-full blur-3xl opacity-40 group-hover:opacity-50 transition-opacity duration-500" />
+                  <div className="absolute -inset-2 bg-gradient-to-r from-indigo-500 to-pink-500 rounded-full blur-2xl opacity-30 group-hover:opacity-40 transition-opacity duration-500" />
+                  <div className="absolute -inset-1 bg-gradient-primary rounded-full blur-xl opacity-25 group-hover:opacity-35 transition-opacity duration-500" />
+                  
+                  {/* Icon container with reduced styling */}
+                  <div className="relative rounded-full bg-gradient-primary p-7 sm:p-8 shadow-[0_0_25px_rgba(99,102,241,0.5),0_0_50px_rgba(236,72,153,0.4)] group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 ease-out">
+                    {/* Inner shine effect */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/30 via-transparent to-transparent" />
+                    <Camera className="h-12 w-12 sm:h-14 sm:w-14 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] relative z-10 group-hover:scale-110 transition-transform duration-500" />
                   </div>
                 </div>
+                
                 <div className="text-center">
-                  <h2 className="mb-3 text-3xl font-bold text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                  <h2 className="mb-4 text-3xl sm:text-4xl font-bold text-white drop-shadow-[0_0_30px_rgba(99,102,241,0.4)] tracking-tight">
                     Let's scan for red flags 🚩
                   </h2>
-                  <p className="text-sm text-gray-400 mb-8">
+                  <p className="text-sm sm:text-base text-gray-300 mb-10 font-medium">
                     {subscriptionStatus === 'free' && remainingScans === 0
                       ? 'Upgrade to Pro to continue'
                       : 'Drag & drop an image or choose an option below'}
                   </p>
                 </div>
-                <div className="flex flex-col gap-3 w-full">
+                
+                <div className="flex flex-col gap-4 w-full max-w-sm">
                   <button
                     type="button"
                     onClick={handleChooseFromGallery}
                     disabled={subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0}
-                    className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-6 py-4 font-bold text-white text-base min-h-[56px] transition-all hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:shadow-glow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group/btn relative w-full rounded-2xl border-2 border-white/30 bg-gradient-to-br from-black/70 via-black/60 to-black/70 backdrop-blur-xl px-6 py-4 font-bold text-white text-base min-h-[60px] transition-all duration-500 hover:border-indigo-500/60 hover:bg-indigo-500/15 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {subscriptionStatus === 'free' && remainingScans === 0
-                      ? 'Upgrade to Pro'
-                      : 'Choose from Gallery'}
+                    <span className="relative z-10">{subscriptionStatus === 'free' && remainingScans === 0 ? 'Upgrade to Pro' : 'Choose from Gallery'}</span>
                   </button>
                   <button
                     type="button"
                     onClick={handleTakePhoto}
                     disabled={subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0}
-                    className="w-full rounded-xl glow-button px-6 py-4 font-bold text-white text-base min-h-[56px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group/btn relative w-full rounded-2xl overflow-hidden bg-gradient-primary px-6 py-4 font-bold text-white text-base min-h-[60px] transition-all duration-500 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_25px_rgba(99,102,241,0.4),0_0_50px_rgba(236,72,153,0.3)] hover:shadow-[0_0_35px_rgba(99,102,241,0.5),0_0_70px_rgba(236,72,153,0.4)]"
                   >
-                    {subscriptionStatus === 'free' && remainingScans === 0
-                      ? 'Upgrade to Pro'
-                      : 'Take Photo'}
+                    <div className="absolute -inset-1 rounded-2xl bg-gradient-primary blur-xl opacity-40 group-hover/btn:opacity-50 transition-opacity" />
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      <Camera className="h-5 w-5 group-hover/btn:rotate-12 transition-transform duration-500" />
+                      {subscriptionStatus === 'free' && remainingScans === 0 ? 'Upgrade to Pro' : 'Take Photo'}
+                    </span>
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-8 glass-card animate-slide-up shadow-lg" style={{ animationDelay: '0.2s' }}>
-            <h3 className="mb-6 text-lg font-bold text-white">
-              How it works?
-            </h3>
-            <ul className="space-y-4 text-sm text-gray-400">
-              <li className="flex items-start gap-3 stagger-item" style={{ animationDelay: '0.3s' }}>
-                <span className="mt-1 text-pink-500 text-lg">•</span>
-                <span>Upload a dating profile screenshot</span>
-              </li>
-              <li className="flex items-start gap-3 stagger-item" style={{ animationDelay: '0.4s' }}>
-                <span className="mt-1 text-pink-500 text-lg">•</span>
-                <span>Our AI analyzes the content to detect red flags</span>
-              </li>
-              <li className="flex items-start gap-3 stagger-item" style={{ animationDelay: '0.5s' }}>
-                <span className="mt-1 text-pink-500 text-lg">•</span>
-                <span>Get a detailed report in seconds</span>
-              </li>
-            </ul>
+          {/* Premium How it Works Section */}
+          <div className="group relative animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            {/* Reduced glow effects */}
+            <div className="absolute -inset-1 rounded-[2rem] bg-gradient-primary blur-2xl opacity-20 group-hover:opacity-25 transition-opacity duration-500" />
+            <div className="absolute -inset-0.5 rounded-[2rem] bg-gradient-to-r from-indigo-500/15 via-pink-500/15 to-indigo-500/15 blur-xl opacity-15 group-hover:opacity-20 transition-opacity duration-500" />
+            
+            {/* Premium glassmorphism container */}
+            <div className="relative rounded-[2rem] border-2 border-white/20 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-2xl p-8 sm:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.1),inset_0_2px_20px_rgba(255,255,255,0.08)] group-hover:shadow-[0_30px_80px_rgba(0,0,0,0.6),0_0_0_2px_rgba(99,102,241,0.2),inset_0_2px_30px_rgba(255,255,255,0.12)] group-hover:-translate-y-1 transition-all duration-500">
+              {/* Inner glow effect */}
+              <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-indigo-500/5 via-transparent to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              
+              <div className="relative z-10">
+                <div className="mb-8 flex items-center gap-3">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-primary rounded-lg blur-xl opacity-50" />
+                    <div className="relative rounded-lg bg-gradient-primary p-2 shadow-[0_0_20px_rgba(99,102,241,0.5)]">
+                      <Sparkles className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+                    How it works?
+                  </h3>
+                </div>
+                
+                <div className="space-y-6">
+                  {/* Step 1 */}
+                  <div className="group/step flex items-start gap-4 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+                    <div className="relative flex-shrink-0">
+                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 to-indigo-600/20 rounded-xl blur-lg opacity-50 group-hover/step:opacity-70 transition-opacity duration-300" />
+                      <div className="relative rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-600/10 border border-indigo-500/30 p-3 shadow-[0_0_20px_rgba(99,102,241,0.3)] group-hover/step:scale-110 group-hover/step:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300">
+                        <span className="text-2xl font-bold text-indigo-300">1</span>
+                      </div>
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <p className="text-base sm:text-lg text-white font-medium mb-1">
+                        Upload a dating profile screenshot
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Simply drag & drop or select an image from your gallery
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Step 2 */}
+                  <div className="group/step flex items-start gap-4 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                    <div className="relative flex-shrink-0">
+                      <div className="absolute inset-0 bg-gradient-to-br from-pink-500/30 to-pink-600/20 rounded-xl blur-lg opacity-50 group-hover/step:opacity-70 transition-opacity duration-300" />
+                      <div className="relative rounded-xl bg-gradient-to-br from-pink-500/20 to-pink-600/10 border border-pink-500/30 p-3 shadow-[0_0_20px_rgba(236,72,153,0.3)] group-hover/step:scale-110 group-hover/step:shadow-[0_0_30px_rgba(236,72,153,0.5)] transition-all duration-300">
+                        <span className="text-2xl font-bold text-pink-300">2</span>
+                      </div>
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <p className="text-base sm:text-lg text-white font-medium mb-1">
+                        Our AI analyzes the content to detect red flags
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Advanced algorithms examine every detail for warning signs
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Step 3 */}
+                  <div className="group/step flex items-start gap-4 animate-slide-up" style={{ animationDelay: '0.5s' }}>
+                    <div className="relative flex-shrink-0">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-purple-600/20 rounded-xl blur-lg opacity-50 group-hover/step:opacity-70 transition-opacity duration-300" />
+                      <div className="relative rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30 p-3 shadow-[0_0_20px_rgba(168,85,247,0.3)] group-hover/step:scale-110 group-hover/step:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-300">
+                        <span className="text-2xl font-bold text-purple-300">3</span>
+                      </div>
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <p className="text-base sm:text-lg text-white font-medium mb-1">
+                        Get a detailed report in seconds
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Receive comprehensive insights with explanations
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -608,7 +677,7 @@ export default function HomePage() {
                   <p className="text-sm text-gray-400">Unlimited scans</p>
                 </div>
                 <div className="mb-5">
-                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$3.99</span>
+                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$6.99</span>
                   <span className="text-gray-400 ml-2">/month</span>
                 </div>
                 <button
@@ -620,14 +689,20 @@ export default function HomePage() {
               </div>
 
               {/* Lifetime Plan */}
-              <div className="rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-6 glass-card">
+              <div className="relative rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-6 glass-card">
+                <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-pink-500/80 to-purple-500/80 px-3 py-1 text-xs font-bold text-white shadow-glow-sm">
+                  Best value
+                </div>
                 <div className="mb-3">
                   <h3 className="mb-1 text-2xl font-bold text-white">Lifetime</h3>
                   <p className="text-sm text-gray-400">Lifetime access</p>
                 </div>
-                <div className="mb-5">
-                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$24.99</span>
+                <div className="mb-2">
+                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$49.99</span>
                   <span className="text-gray-400 ml-2">one-time</span>
+                </div>
+                <div className="mb-5">
+                  <span className="text-sm text-gray-500 line-through">Normally $79.99</span>
                 </div>
                 <button
                   onClick={() => handleCheckout('lifetime')}

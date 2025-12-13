@@ -311,7 +311,11 @@ async function drawCommonElements(
         ctx.fillText(line, size / 2, y);
       }
     });
-  } else {
+  }
+  
+  // Toujours afficher les top red flags APRÈS la phrase (si elle existe) ou à la place
+  // Mais seulement s'il y a des red flags à afficher
+  if (!showFunnyPhrase && data.top3Flags.length > 0) {
     // Afficher les top red flags (code original)
     const flagsStartY = contentStartY;
     const maxFlags = Math.min(3, data.top3Flags.length);
