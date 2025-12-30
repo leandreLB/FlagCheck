@@ -499,7 +499,7 @@ export default function ResultsPage() {
                   <p className="text-sm text-gray-400">Unlimited scans</p>
                 </div>
                 <div className="mb-5">
-                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$6.99</span>
+                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$9.99</span>
                   <span className="text-gray-400 ml-2">/month</span>
                 </div>
                 <button
@@ -520,11 +520,12 @@ export default function ResultsPage() {
                   <p className="text-sm text-gray-400">Annual access</p>
                 </div>
                 <div className="mb-2">
-                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$49.99</span>
+                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$79.99</span>
                   <span className="text-gray-400 ml-2">/year</span>
                 </div>
                 <div className="mb-5">
-                  <span className="text-sm text-gray-500 line-through">Normally $79.99</span>
+                  <span className="text-sm text-gray-500 line-through">Normally $119.88</span>
+                  <span className="text-sm text-green-400 ml-2 font-semibold">Save 33%</span>
                 </div>
                 <button
                   onClick={() => handleCheckout('pro_annual')}

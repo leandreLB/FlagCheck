@@ -44,9 +44,8 @@ export default function PaywallScreen() {
   const benefits = [
     'Unlimited profile scans',
     'Unlimited self-tests',
-    'Track your progress over time',
-    'Get personalized tips',
-    'Access full history',
+    'Full scan history',
+    'Progress tracking',
   ];
 
   return (
@@ -73,13 +72,11 @@ export default function PaywallScreen() {
 
         {/* Benefits */}
         <div className="mb-8 rounded-2xl border border-white/10 bg-black/50 backdrop-blur-xl p-6">
-          <div className="space-y-4">
+          <div className="space-y-3">
             {benefits.map((benefit, index) => (
               <div key={index} className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                  <Check className="h-4 w-4 text-green-500" />
-                </div>
-                <span className="text-white font-medium">{benefit}</span>
+                <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                <span className="text-white text-sm">{benefit}</span>
               </div>
             ))}
           </div>
@@ -92,7 +89,7 @@ export default function PaywallScreen() {
             <div className="text-center">
               <h3 className="text-2xl font-bold text-white mb-2">PRO</h3>
               <div className="mb-4">
-                <span className="text-6xl font-bold text-pink-500 drop-shadow-[0_0_12px_rgba(236,72,153,0.8)]">9.99€</span>
+                <span className="text-6xl font-bold text-pink-500 drop-shadow-[0_0_12px_rgba(236,72,153,0.8)]">$9.99</span>
                 <span className="text-xl text-gray-400 ml-2">/month</span>
               </div>
               <p className="text-sm text-gray-400 mb-6">Monthly billing</p>
@@ -115,10 +112,10 @@ export default function PaywallScreen() {
             <div className="text-center">
               <h3 className="text-2xl font-bold text-white mb-2">ANNUAL PRO</h3>
               <div className="mb-2">
-                <span className="text-6xl font-bold text-pink-500 drop-shadow-[0_0_12px_rgba(236,72,153,0.8)]">79.99€</span>
+                <span className="text-6xl font-bold text-pink-500 drop-shadow-[0_0_12px_rgba(236,72,153,0.8)]">$79.99</span>
                 <span className="text-xl text-gray-400 ml-2">/year</span>
               </div>
-              <p className="text-sm text-gray-400 mb-1">Only 6.67€/month</p>
+              <p className="text-sm text-gray-400 mb-1">Only $6.67/month</p>
               <p className="text-sm font-semibold text-green-400 mb-6">Save 33%</p>
               <button
                 onClick={() => handleCheckout('pro_annual')}
