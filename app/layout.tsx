@@ -54,6 +54,23 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="fr" style={{ backgroundColor: '#0F0F0F' }}>
         <head>
+          {/* CRITICAL: Immediate script to prevent ANY flash - MUST be FIRST */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  document.documentElement.style.backgroundColor = '#0F0F0F';
+                  document.documentElement.style.margin = '0';
+                  document.documentElement.style.padding = '0';
+                  if (document.body) {
+                    document.body.style.backgroundColor = '#0F0F0F';
+                    document.body.style.margin = '0';
+                    document.body.style.padding = '0';
+                  }
+                })();
+              `,
+            }}
+          />
           {/* CRITICAL: Inline CSS to prevent white flash - MUST be BEFORE any other CSS */}
           <style
             dangerouslySetInnerHTML={{
@@ -93,11 +110,11 @@ export default function RootLayout({
                   left: 0;
                   width: 100%;
                   height: 100%;
-                  background: linear-gradient(180deg, #0F0F0F 0%, #1a0a2e 100%);
+                  background-color: #0F0F0F !important;
                   display: flex;
                   justify-content: center;
                   align-items: center;
-                  z-index: 9999;
+                  z-index: 99999;
                   transition: opacity 0.5s ease-out;
                 }
                 
@@ -151,9 +168,16 @@ export default function RootLayout({
             dangerouslySetInnerHTML={{
               __html: `
                 (function() {
+                  // Set background immediately
+                  document.documentElement.style.backgroundColor = '#0F0F0F';
+                  if (document.body) {
+                    document.body.style.backgroundColor = '#0F0F0F';
+                  }
                   try {
                     if (typeof localStorage !== 'undefined' && localStorage.getItem('flagcheck-splash-shown')) {
-                      document.body.setAttribute('data-splash-shown', 'true');
+                      if (document.body) {
+                        document.body.setAttribute('data-splash-shown', 'true');
+                      }
                     }
                   } catch(e) {}
                 })();
