@@ -59,22 +59,27 @@ export default function RootLayout({
             dangerouslySetInnerHTML={{
               __html: `
                 html {
-                  background-color: #0F0F0F;
+                  background-color: #0F0F0F !important;
+                  margin: 0;
+                  padding: 0;
+                  width: 100%;
+                  height: 100%;
                 }
                 
                 body {
                   margin: 0;
                   padding: 0;
-                  background-color: #0F0F0F;
+                  background-color: #0F0F0F !important;
                   width: 100%;
-                  min-height: 100%;
+                  height: 100%;
+                  overflow-x: hidden;
                   -webkit-tap-highlight-color: transparent;
                 }
                 
                 #__next, [data-nextjs-scroll-focus-boundary] {
                   width: 100%;
                   min-height: 100vh;
-                  background-color: #0F0F0F;
+                  background-color: #0F0F0F !important;
                 }
                 
                 /* Splash Screen */
@@ -104,32 +109,13 @@ export default function RootLayout({
                   gap: 24px;
                 }
                 
-                .splash-logo {
-                  width: 120px;
-                  height: 120px;
-                  animation: pulse 2s ease-in-out infinite;
-                  object-fit: contain;
-                }
-                
-                @keyframes pulse {
-                  0%, 100% { 
-                    transform: scale(1); 
-                    opacity: 1; 
-                  }
-                  50% { 
-                    transform: scale(1.05); 
-                    opacity: 0.8; 
-                  }
-                }
-                
                 .splash-title {
-                  font-size: 32px;
+                  font-size: 28px;
                   font-weight: 700;
                   color: #ffffff;
                   margin: 0;
                   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                  letter-spacing: 1px;
-                  text-shadow: 0 2px 20px rgba(139, 92, 246, 0.5);
+                  letter-spacing: 0.5px;
                 }
                 
                 .splash-loader {
@@ -194,14 +180,11 @@ export default function RootLayout({
           
           {/* Fallback pour tous les autres appareils */}
           <link rel="apple-touch-startup-image" href="/splash/default.png" />
-          
-          <link rel="stylesheet" href="/critical.css" />
         </head>
-        <body className={`${inter.variable} antialiased`} style={{ backgroundColor: '#0F0F0F', margin: 0, padding: 0 }}>
+        <body className={`${inter.variable} antialiased`} style={{ backgroundColor: '#0F0F0F', margin: 0, padding: 0, width: '100%', height: '100%' }}>
           {/* SPLASH SCREEN - Must be BEFORE root content */}
           <div id="splash-screen">
             <div className="splash-content">
-              <img src="/icons/icon-192.png" alt="FlagCheck" className="splash-logo" />
               <h1 className="splash-title">FlagCheck</h1>
               <div className="splash-loader"></div>
             </div>
