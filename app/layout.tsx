@@ -22,12 +22,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
       { url: "/favicon.ico", sizes: "any" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/icon-180.png", sizes: "180x180", type: "image/png" },
     ],
   },
   other: {
@@ -105,9 +105,10 @@ export default function RootLayout({
                 }
                 
                 .splash-logo {
-                  width: 100px;
-                  height: 100px;
+                  width: 120px;
+                  height: 120px;
                   animation: pulse 2s ease-in-out infinite;
+                  object-fit: contain;
                 }
                 
                 @keyframes pulse {
@@ -122,12 +123,13 @@ export default function RootLayout({
                 }
                 
                 .splash-title {
-                  font-size: 28px;
+                  font-size: 32px;
                   font-weight: 700;
                   color: #ffffff;
                   margin: 0;
                   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                  letter-spacing: 0.5px;
+                  letter-spacing: 1px;
+                  text-shadow: 0 2px 20px rgba(139, 92, 246, 0.5);
                 }
                 
                 .splash-loader {
@@ -199,6 +201,7 @@ export default function RootLayout({
           {/* SPLASH SCREEN - Must be BEFORE root content */}
           <div id="splash-screen">
             <div className="splash-content">
+              <img src="/icons/icon-192.png" alt="FlagCheck" className="splash-logo" />
               <h1 className="splash-title">FlagCheck</h1>
               <div className="splash-loader"></div>
             </div>
