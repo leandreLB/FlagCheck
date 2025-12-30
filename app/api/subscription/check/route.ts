@@ -12,7 +12,16 @@ export async function GET() {
     }
 
     const subscription = await getUserSubscription(userId);
-    return NextResponse.json(subscription, { status: 200 });
+    // Retourner un format compatible avec l'ancien code (pour migration progressive)
+    return NextResponse.json({
+      status: subscription.plan === "free" ? "free" : "pro",
+      plan: subscription.plan,
+      scansRemaining: subscription.scansRemaining,
+      freeScansRemaining: subscription.freeScansRemaining,
+      subscriptionStartDate: subscription.subscriptionStartDate,
+      nextBillingDate: subscription.nextBillingDate,
+      freeProUntil: subscription.freeProUntil,
+    }, { status: 200 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Server error";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -14,6 +14,8 @@ export default function HomePage() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<'free' | 'pro' | 'lifetime'>('free');
   const [showCameraModal, setShowCameraModal] = useState(false);
+  const [showDescribeModal, setShowDescribeModal] = useState(false);
+  const [description, setDescription] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [isCameraLoading, setIsCameraLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,7 +66,6 @@ export default function HomePage() {
       const isSmallScreen = window.innerWidth <= 768;
       const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       
-      // Considérer comme mobile si c'est iOS, Android, ou un petit écran avec tactile
       setIsMobile(isMobileDevice || (isSmallScreen && hasTouchScreen));
     };
     checkMobile();
@@ -76,7 +77,7 @@ export default function HomePage() {
     };
   }, [fetchSubscriptionInfo]);
 
-  // Nettoyer le stream vidéo quand le composant se démonte ou le modal se ferme
+  // Nettoyer le stream vidéo quand le modal se ferme
   useEffect(() => {
     if (!showCameraModal && streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
@@ -93,6 +94,12 @@ export default function HomePage() {
   const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file only');
+      return;
+    }
+
+    if (!userId) {
+      const currentUrl = window.location.pathname;
+      router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`);
       return;
     }
 
@@ -116,7 +123,6 @@ export default function HomePage() {
       if (!response.ok) {
         const error = await response.json();
         
-        // If limit reached error, show paywall
         if (response.status === 403) {
           setShowPaywall(true);
           setIsLoading(false);
@@ -141,9 +147,70 @@ export default function HomePage() {
     }
   };
 
-  const handleCheckout = async (plan: 'pro' | 'lifetime') => {
+  const handleDescribeAnalyze = async () => {
+    if (!description.trim()) {
+      alert('Please enter a description');
+      return;
+    }
+
+    if (!userId) {
+      const currentUrl = window.location.pathname;
+      router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
+
+    // Check if user has reached limit BEFORE analyzing
+    if (subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0) {
+      setShowPaywall(true);
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      // Convertir 'pro' en 'monthly' pour correspondre à l'API
+      const response = await fetch('/api/analyze-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        
+        if (response.status === 403) {
+          setShowPaywall(true);
+          setIsLoading(false);
+          return;
+        }
+        
+        throw new Error(error.error || 'Analysis failed');
+      }
+
+      const result = await response.json();
+      
+      // Update local count
+      if (subscriptionStatus === 'free') {
+        setRemainingScans((prev) => (prev !== null ? prev - 1 : null));
+      }
+      
+      setShowDescribeModal(false);
+      setDescription('');
+      router.push(`/results/${result.scanId}`);
+    } catch (error) {
+      console.error('Error:', error);
+      alert(error instanceof Error ? error.message : 'An error occurred');
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckout = async (plan: 'pro' | 'lifetime') => {
+    if (!userId) {
+      const currentUrl = window.location.pathname;
+      router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
+
+    try {
       const priceType = plan === 'pro' ? 'monthly' : 'lifetime';
       const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
@@ -198,7 +265,12 @@ export default function HomePage() {
   };
 
   const handleChooseFromGallery = () => {
-    // If no scans remaining, show paywall instead of file picker
+    if (!userId) {
+      const currentUrl = window.location.pathname;
+      router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
+
     if (subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0) {
       setShowPaywall(true);
       return;
@@ -208,7 +280,12 @@ export default function HomePage() {
   };
 
   const handleTakePhoto = async () => {
-    // If no scans remaining, show paywall
+    if (!userId) {
+      const currentUrl = window.location.pathname;
+      router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
+
     if (subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0) {
       setShowPaywall(true);
       return;
@@ -222,7 +299,6 @@ export default function HomePage() {
 
     // Sur desktop, utiliser WebRTC
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      // Fallback vers file picker si WebRTC n'est pas disponible
       alert('Camera not available on this device. Please choose a file from your gallery instead.');
       fileInputRef.current?.click();
       return;
@@ -230,20 +306,17 @@ export default function HomePage() {
 
     setIsCameraLoading(true);
     try {
-      // Essayer d'abord avec la caméra arrière (environment), puis fallback vers user
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' }
         });
       } catch (envError) {
-        // Si environment échoue, essayer avec user (caméra avant)
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: 'user' }
           });
         } catch (userError) {
-          // Si les deux échouent, essayer sans contrainte
           stream = await navigator.mediaDevices.getUserMedia({
             video: true
           });
@@ -254,7 +327,6 @@ export default function HomePage() {
       setShowCameraModal(true);
       setIsCameraLoading(false);
       
-      // Attendre que le modal soit monté pour attacher le stream
       setTimeout(() => {
         if (videoRef.current && stream) {
           videoRef.current.srcObject = stream;
@@ -263,7 +335,6 @@ export default function HomePage() {
             setIsCameraLoading(false);
           });
           
-          // Détecter quand la vidéo est prête
           videoRef.current.onloadedmetadata = () => {
             setIsCameraLoading(false);
           };
@@ -272,7 +343,6 @@ export default function HomePage() {
     } catch (error) {
       console.error('Error accessing camera:', error);
       setIsCameraLoading(false);
-      // Fallback vers file picker si la caméra n'est pas disponible
       alert('Camera not available. Please choose a file from your gallery instead.');
       fileInputRef.current?.click();
     }
@@ -283,7 +353,6 @@ export default function HomePage() {
     if (file) {
       handleFileSelect(file);
     }
-    // Réinitialiser l'input pour permettre de prendre plusieurs photos
     if (cameraInputRef.current) {
       cameraInputRef.current.value = '';
     }
@@ -302,16 +371,13 @@ export default function HomePage() {
       ctx.drawImage(video, 0, 0);
       canvas.toBlob((blob) => {
         if (blob) {
-          // Arrêter le stream
           if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop());
             streamRef.current = null;
           }
           
-          // Fermer le modal
           setShowCameraModal(false);
           
-          // Créer un File à partir du Blob
           const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
           handleFileSelect(file);
         }
@@ -327,8 +393,38 @@ export default function HomePage() {
     setShowCameraModal(false);
   };
 
+  const handleScanProfileClick = () => {
+    if (!userId) {
+      const currentUrl = window.location.pathname;
+      router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
+
+    if (subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0) {
+      setShowPaywall(true);
+      return;
+    }
+
+    handleChooseFromGallery();
+  };
+
+  const handleDescribePersonClick = () => {
+    if (!userId) {
+      const currentUrl = window.location.pathname;
+      router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`);
+      return;
+    }
+
+    if (subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0) {
+      setShowPaywall(true);
+      return;
+    }
+
+    setShowDescribeModal(true);
+  };
+
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen type="scan" />;
   }
 
   const getStatusBadge = () => {
@@ -363,19 +459,17 @@ export default function HomePage() {
     return null;
   };
 
+  const canPerformScan = subscriptionStatus !== 'free' || (remainingScans !== null && remainingScans > 0);
+
   return (
     <div className="relative flex flex-col overflow-x-hidden overflow-y-visible w-full">
       {/* Background with violet reflections */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        {/* Base dark background with violet tint */}
         <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
-        
-        {/* Violet reflections - multiple layers */}
         <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-gradient-radial from-purple-600/20 via-purple-700/10 to-transparent blur-[150px] opacity-60" />
         <div className="absolute bottom-0 right-1/4 w-[700px] h-[700px] bg-gradient-radial from-purple-500/15 via-purple-600/8 to-transparent blur-[140px] opacity-50" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-gradient-radial from-purple-700/25 via-purple-800/15 to-transparent blur-[180px] opacity-40" />
         
-        {/* Subtle particle effect - reduced */}
         <div className="absolute inset-0 opacity-[0.02]">
           {[...Array(30)].map((_, i) => (
             <div
@@ -405,15 +499,20 @@ export default function HomePage() {
         >
           <div className="mx-auto max-w-[600px] md:max-w-none">
             <div className="flex h-[60px] items-center justify-between rounded-2xl border border-white/5 bg-black/40 backdrop-blur-[20px] px-5 shadow-lg">
-              {/* Left: Logo */}
               <h1 className="text-xl font-bold text-white">
                 FlagCheck
               </h1>
               
-              {/* Right: Get PRO Button */}
-              {subscriptionStatus === 'free' && (
+              {(!userId || subscriptionStatus === 'free') && (
                 <button
-                  onClick={() => setShowPaywall(true)}
+                  onClick={() => {
+                    if (!userId) {
+                      const currentUrl = window.location.pathname;
+                      router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`);
+                      return;
+                    }
+                    setShowPaywall(true);
+                  }}
                   className="rounded-xl bg-gradient-primary px-4 py-2 text-sm font-semibold text-white shadow-[0_4px_15px_rgba(99,102,241,0.4)] transition-all hover:scale-105 hover:shadow-[0_6px_20px_rgba(99,102,241,0.6)]"
                 >
                   Get PRO
@@ -423,9 +522,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Hero Section - Premium spacing (120px top and bottom) */}
-        <div className="relative z-10 mb-[120px] mt-[120px] text-center animate-fade-in">
-          {/* Subtle moving ambient aura around text - circular movement */}
+        {/* Hero Section */}
+        <div className="relative z-10 mb-[60px] mt-[60px] text-center animate-fade-in">
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="absolute w-[700px] h-[700px] animate-aura-move">
               <div className="absolute inset-0 bg-gradient-radial-text-aura blur-[80px]" />
@@ -433,7 +531,6 @@ export default function HomePage() {
           </div>
           
           <div className="relative mb-4 inline-block">
-            {/* Glow effect matching camera icon - stronger and moving */}
             <div className="absolute inset-0 bg-gradient-primary blur-2xl opacity-70 animate-glow-move" style={{
               borderRadius: '12px',
               transform: 'scale(1.3)',
@@ -465,110 +562,84 @@ export default function HomePage() {
           {/* Subscription Status */}
           {getStatusBadge()}
 
-          {/* Upload zone - Premium Glassmorphism with Smooth Animations */}
-          <div className="group relative mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            {/* Reduced premium glow effects */}
-            <div className={`absolute -inset-2 rounded-[2rem] bg-gradient-primary blur-3xl transition-all duration-500 ease-out ${
-              isDragging ? 'opacity-50 scale-110' : 'opacity-30 group-hover:opacity-40'
-            }`} />
-            <div className={`absolute -inset-1.5 rounded-[2rem] bg-gradient-to-r from-indigo-500/25 via-pink-500/25 to-indigo-500/25 blur-2xl transition-all duration-500 ease-out ${
-              isDragging ? 'opacity-40' : 'opacity-25 group-hover:opacity-30'
-            }`} />
-            <div className={`absolute -inset-1 rounded-[2rem] bg-gradient-to-br from-indigo-500/20 via-pink-500/20 to-purple-500/20 blur-xl transition-all duration-500 ease-out ${
-              isDragging ? 'opacity-30' : 'opacity-20 group-hover:opacity-25'
-            }`} />
-            
-            {/* Premium glassmorphism container */}
-            <div
-                  className={`relative rounded-[2rem] border-2 border-dashed p-10 sm:p-12 md:p-14 backdrop-blur-2xl transition-all duration-500 ease-out min-h-[360px] flex items-center justify-center overflow-hidden ${
-                isDragging
-                  ? 'border-indigo-400/60 bg-gradient-to-br from-indigo-500/20 via-indigo-500/12 to-pink-500/15 shadow-[0_0_50px_rgba(99,102,241,0.5),0_0_80px_rgba(236,72,153,0.4)] scale-[1.02]'
-                  : 'border-white/30 bg-gradient-to-br from-black/60 via-black/50 to-black/60 shadow-[0_15px_40px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.08),inset_0_1px_15px_rgba(255,255,255,0.06)] group-hover:shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_2px_rgba(99,102,241,0.2),inset_0_1px_20px_rgba(255,255,255,0.08)] group-hover:-translate-y-1 group-hover:scale-[1.01]'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
+          {/* Two Cards Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Scan Profile Card */}
+            <div 
+              className={`group relative rounded-[2rem] border-2 ${
+                canPerformScan 
+                  ? 'border-white/30 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-2xl cursor-pointer hover:border-indigo-500/60 hover:bg-indigo-500/15 hover:shadow-[0_0_30px_rgba(99,102,241,0.3)] hover:-translate-y-1 hover:scale-[1.02] transition-all duration-500' 
+                  : 'border-white/10 bg-black/40 backdrop-blur-xl opacity-60 cursor-not-allowed'
+              } p-8 shadow-[0_15px_40px_rgba(0,0,0,0.4)]`}
+              onClick={handleScanProfileClick}
             >
-              {/* Subtle inner glow effect - reduced */}
-              <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-indigo-500/5 via-transparent to-pink-500/5 opacity-0 group-hover:opacity-50 transition-opacity duration-500 pointer-events-none" />
+              <div className="absolute -inset-1 rounded-[2rem] bg-gradient-primary blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-500" />
               
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileInputChange}
-                className="hidden"
-              />
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleCameraInputChange}
-                className="hidden"
-              />
-              <div className="flex flex-col items-center gap-8 w-full relative z-10">
-                {/* Premium Camera Icon with enhanced animations */}
+              <div className="relative z-10 flex flex-col items-center text-center gap-4">
                 <div className="relative">
-                  {/* Reduced icon glow */}
-                  <div className="absolute inset-0 bg-gradient-primary rounded-full blur-3xl opacity-40 group-hover:opacity-50 transition-opacity duration-500" />
-                  <div className="absolute -inset-2 bg-gradient-to-r from-indigo-500 to-pink-500 rounded-full blur-2xl opacity-30 group-hover:opacity-40 transition-opacity duration-500" />
-                  <div className="absolute -inset-1 bg-gradient-primary rounded-full blur-xl opacity-25 group-hover:opacity-35 transition-opacity duration-500" />
-                  
-                  {/* Icon container with reduced styling */}
-                  <div className="relative rounded-full bg-gradient-primary p-7 sm:p-8 shadow-[0_0_25px_rgba(99,102,241,0.5),0_0_50px_rgba(236,72,153,0.4)] group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 ease-out">
-                    {/* Inner shine effect */}
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/30 via-transparent to-transparent" />
-                    <Camera className="h-12 w-12 sm:h-14 sm:w-14 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.6)] relative z-10 group-hover:scale-110 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-gradient-primary rounded-full blur-2xl opacity-40" />
+                  <div className="relative rounded-full bg-gradient-primary p-6 shadow-[0_0_25px_rgba(99,102,241,0.5)]">
+                    <Camera className="h-10 w-10 text-white" />
                   </div>
                 </div>
                 
-                <div className="text-center">
-                  <h2 className="mb-4 text-3xl sm:text-4xl font-bold text-white drop-shadow-[0_0_30px_rgba(99,102,241,0.4)] tracking-tight">
-                    Let's scan for red flags 🚩
-                  </h2>
-                  <p className="text-sm sm:text-base text-gray-300 mb-10 font-medium">
-                    {subscriptionStatus === 'free' && remainingScans === 0
-                      ? 'Upgrade to Pro to continue'
-                      : 'Drag & drop an image or choose an option below'}
-                  </p>
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-2">Scan Profile</h3>
+                  <p className="text-sm text-gray-400">Upload a screenshot</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Describe Person Card */}
+            <div 
+              className={`group relative rounded-[2rem] border-2 ${
+                canPerformScan 
+                  ? 'border-white/30 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-2xl cursor-pointer hover:border-pink-500/60 hover:bg-pink-500/15 hover:shadow-[0_0_30px_rgba(236,72,153,0.3)] hover:-translate-y-1 hover:scale-[1.02] transition-all duration-500' 
+                  : 'border-white/10 bg-black/40 backdrop-blur-xl opacity-60 cursor-not-allowed'
+              } p-8 shadow-[0_15px_40px_rgba(0,0,0,0.4)]`}
+              onClick={handleDescribePersonClick}
+            >
+              <div className="absolute -inset-1 rounded-[2rem] bg-gradient-to-r from-pink-500 to-purple-500 blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-500" />
+              
+              <div className="relative z-10 flex flex-col items-center text-center gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full blur-2xl opacity-40" />
+                  <div className="relative rounded-full bg-gradient-to-r from-pink-500 to-purple-500 p-6 shadow-[0_0_25px_rgba(236,72,153,0.5)]">
+                    <Sparkles className="h-10 w-10 text-white" />
+                  </div>
                 </div>
                 
-                <div className="flex flex-col gap-4 w-full max-w-sm">
-                  <button
-                    type="button"
-                    onClick={handleChooseFromGallery}
-                    disabled={subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0}
-                    className="group/btn relative w-full rounded-2xl border-2 border-white/30 bg-gradient-to-br from-black/70 via-black/60 to-black/70 backdrop-blur-xl px-6 py-4 font-bold text-white text-base min-h-[60px] transition-all duration-500 hover:border-indigo-500/60 hover:bg-indigo-500/15 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span className="relative z-10">{subscriptionStatus === 'free' && remainingScans === 0 ? 'Upgrade to Pro' : 'Choose from Gallery'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleTakePhoto}
-                    disabled={subscriptionStatus === 'free' && remainingScans !== null && remainingScans <= 0}
-                    className="group/btn relative w-full rounded-2xl overflow-hidden bg-gradient-primary px-6 py-4 font-bold text-white text-base min-h-[60px] transition-all duration-500 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_25px_rgba(99,102,241,0.4),0_0_50px_rgba(236,72,153,0.3)] hover:shadow-[0_0_35px_rgba(99,102,241,0.5),0_0_70px_rgba(236,72,153,0.4)]"
-                  >
-                    <div className="absolute -inset-1 rounded-2xl bg-gradient-primary blur-xl opacity-40 group-hover/btn:opacity-50 transition-opacity" />
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      <Camera className="h-5 w-5 group-hover/btn:rotate-12 transition-transform duration-500" />
-                      {subscriptionStatus === 'free' && remainingScans === 0 ? 'Upgrade to Pro' : 'Take Photo'}
-                    </span>
-                  </button>
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-2">Describe Person</h3>
+                  <p className="text-sm text-gray-400">Type a description</p>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Hidden file inputs */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileInputChange}
+            className="hidden"
+          />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleCameraInputChange}
+            className="hidden"
+          />
+
           {/* Premium How it Works Section */}
           <div className="group relative animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            {/* Reduced glow effects */}
             <div className="absolute -inset-1 rounded-[2rem] bg-gradient-primary blur-2xl opacity-20 group-hover:opacity-25 transition-opacity duration-500" />
             <div className="absolute -inset-0.5 rounded-[2rem] bg-gradient-to-r from-indigo-500/15 via-pink-500/15 to-indigo-500/15 blur-xl opacity-15 group-hover:opacity-20 transition-opacity duration-500" />
             
-            {/* Premium glassmorphism container */}
-            <div className="relative rounded-[2rem] border-2 border-white/20 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-2xl p-8 sm:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.1),inset_0_2px_20px_rgba(255,255,255,0.08)] group-hover:shadow-[0_30px_80px_rgba(0,0,0,0.6),0_0_0_2px_rgba(99,102,241,0.2),inset_0_2px_30px_rgba(255,255,255,0.12)] group-hover:-translate-y-1 transition-all duration-500">
-              {/* Inner glow effect */}
+            <div className="relative rounded-[2rem] border-2 border-white/20 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-2xl p-8 sm:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.5)] group-hover:shadow-[0_30px_80px_rgba(0,0,0,0.6)] group-hover:-translate-y-1 transition-all duration-500">
               <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-indigo-500/5 via-transparent to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
               
               <div className="relative z-10">
@@ -585,29 +656,27 @@ export default function HomePage() {
                 </div>
                 
                 <div className="space-y-6">
-                  {/* Step 1 */}
-                  <div className="group/step flex items-start gap-4 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+                  <div className="group/step flex items-start gap-4">
                     <div className="relative flex-shrink-0">
-                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 to-indigo-600/20 rounded-xl blur-lg opacity-50 group-hover/step:opacity-70 transition-opacity duration-300" />
-                      <div className="relative rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-600/10 border border-indigo-500/30 p-3 shadow-[0_0_20px_rgba(99,102,241,0.3)] group-hover/step:scale-110 group-hover/step:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all duration-300">
+                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 to-indigo-600/20 rounded-xl blur-lg opacity-50" />
+                      <div className="relative rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-600/10 border border-indigo-500/30 p-3">
                         <span className="text-2xl font-bold text-indigo-300">1</span>
                       </div>
                     </div>
                     <div className="flex-1 pt-1">
                       <p className="text-base sm:text-lg text-white font-medium mb-1">
-                        Upload a dating profile screenshot
+                        Upload a screenshot or describe the person
                       </p>
                       <p className="text-sm text-gray-400">
-                        Simply drag & drop or select an image from your gallery
+                        Choose your preferred method to analyze
                       </p>
                     </div>
                   </div>
                   
-                  {/* Step 2 */}
-                  <div className="group/step flex items-start gap-4 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+                  <div className="group/step flex items-start gap-4">
                     <div className="relative flex-shrink-0">
-                      <div className="absolute inset-0 bg-gradient-to-br from-pink-500/30 to-pink-600/20 rounded-xl blur-lg opacity-50 group-hover/step:opacity-70 transition-opacity duration-300" />
-                      <div className="relative rounded-xl bg-gradient-to-br from-pink-500/20 to-pink-600/10 border border-pink-500/30 p-3 shadow-[0_0_20px_rgba(236,72,153,0.3)] group-hover/step:scale-110 group-hover/step:shadow-[0_0_30px_rgba(236,72,153,0.5)] transition-all duration-300">
+                      <div className="absolute inset-0 bg-gradient-to-br from-pink-500/30 to-pink-600/20 rounded-xl blur-lg opacity-50" />
+                      <div className="relative rounded-xl bg-gradient-to-br from-pink-500/20 to-pink-600/10 border border-pink-500/30 p-3">
                         <span className="text-2xl font-bold text-pink-300">2</span>
                       </div>
                     </div>
@@ -621,11 +690,10 @@ export default function HomePage() {
                     </div>
                   </div>
                   
-                  {/* Step 3 */}
-                  <div className="group/step flex items-start gap-4 animate-slide-up" style={{ animationDelay: '0.5s' }}>
+                  <div className="group/step flex items-start gap-4">
                     <div className="relative flex-shrink-0">
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-purple-600/20 rounded-xl blur-lg opacity-50 group-hover/step:opacity-70 transition-opacity duration-300" />
-                      <div className="relative rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30 p-3 shadow-[0_0_20px_rgba(168,85,247,0.3)] group-hover/step:scale-110 group-hover/step:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-300">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-purple-600/20 rounded-xl blur-lg opacity-50" />
+                      <div className="relative rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30 p-3">
                         <span className="text-2xl font-bold text-purple-300">3</span>
                       </div>
                     </div>
@@ -644,167 +712,73 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+      </div>
 
       {/* Paywall Modal */}
       {showPaywall && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-6 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-black/90 backdrop-blur-2xl p-8 shadow-2xl animate-slide-up">
-            <button
-              onClick={() => setShowPaywall(false)}
-              className="absolute right-4 top-4 rounded-xl p-2 text-gray-400 transition-all hover:bg-white/10 hover:text-white"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            <div className="mb-8 text-center">
-              <div className="mb-4 text-6xl">🚫</div>
-              <h2 className="mb-2 text-3xl font-bold text-white">
-                Scan limit reached
-              </h2>
-              <p className="text-gray-400">
-                Upgrade to Pro for unlimited scans!
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {/* Pro Plan */}
-              <div className="relative rounded-3xl border-2 border-indigo-500/50 bg-gradient-to-br from-indigo-600/20 to-indigo-600/10 backdrop-blur-xl p-6 shadow-glow-md hover:border-indigo-500 transition-all duration-300">
-                <div className="absolute right-4 top-4 rounded-full bg-gradient-primary px-3 py-1 text-xs font-bold text-white shadow-glow-sm">
-                  Recommended
-                </div>
-                <div className="mb-3">
-                  <h3 className="mb-1 text-2xl font-bold text-white">Pro</h3>
-                  <p className="text-sm text-gray-400">Unlimited scans</p>
-                </div>
-                <div className="mb-5">
-                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$6.99</span>
-                  <span className="text-gray-400 ml-2">/month</span>
-                </div>
-                <button
-                  onClick={() => handleCheckout('pro')}
-                  className="w-full rounded-xl glow-button px-4 py-4 font-bold text-white min-h-[56px] transition-all duration-300"
-                >
-                  Choose Pro
-                </button>
-              </div>
-
-              {/* Lifetime Plan */}
-              <div className="relative rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-6 glass-card">
-                <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-pink-500/80 to-purple-500/80 px-3 py-1 text-xs font-bold text-white shadow-glow-sm">
-                  Best value
-                </div>
-                <div className="mb-3">
-                  <h3 className="mb-1 text-2xl font-bold text-white">Lifetime</h3>
-                  <p className="text-sm text-gray-400">Lifetime access</p>
-                </div>
-                <div className="mb-2">
-                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$49.99</span>
-                  <span className="text-gray-400 ml-2">one-time</span>
-                </div>
-                <div className="mb-5">
-                  <span className="text-sm text-gray-500 line-through">Normally $79.99</span>
-                </div>
-                <button
-                  onClick={() => handleCheckout('lifetime')}
-                  className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-4 py-4 font-bold text-white min-h-[56px] transition-all hover:border-pink-500/50 hover:bg-pink-500/10 hover:shadow-glow-pink"
-                >
-                  Choose Lifetime
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PaywallModal onClose={() => setShowPaywall(false)} onCheckout={handleCheckout} />
       )}
 
       {/* Camera Modal for Desktop */}
       {showCameraModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-6 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-2xl rounded-3xl border border-white/10 bg-black/90 backdrop-blur-2xl p-8 shadow-2xl animate-slide-up">
-            <button
-              onClick={closeCameraModal}
-              className="absolute right-4 top-4 rounded-xl p-2 text-gray-400 transition-all hover:bg-white/10 hover:text-white z-10"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            <div className="mb-6 text-center">
-              <h2 className="mb-2 text-2xl font-bold text-white">
-                Take a Photo
-              </h2>
-              <p className="text-sm text-gray-400">
-                Position your camera and click capture
-              </p>
-            </div>
-
-            <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10 mb-6 min-h-[300px] flex items-center justify-center">
-              {isCameraLoading && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                  <div className="text-center">
-                    <div className="mb-4 inline-block rounded-full bg-gradient-primary p-4 shadow-glow-md animate-pulse">
-                      <Camera className="h-8 w-8 text-white" />
-                    </div>
-                    <p className="text-gray-400 text-sm">Starting camera...</p>
-                  </div>
-                </div>
-              )}
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-auto max-h-[60vh] object-contain"
-              />
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-0 border-4 border-white/20 rounded-2xl" style={{
-                  clipPath: 'inset(20% 10% 20% 10%)'
-                }} />
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                onClick={closeCameraModal}
-                className="flex-1 rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-6 py-4 font-bold text-white transition-all hover:bg-white/10"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={capturePhotoFromVideo}
-                className="flex-1 rounded-xl glow-button px-6 py-4 font-bold text-white transition-all duration-300"
-              >
-                Capture Photo
-              </button>
-            </div>
-          </div>
-        </div>
+        <CameraModal
+          videoRef={videoRef}
+          isCameraLoading={isCameraLoading}
+          onClose={closeCameraModal}
+          onCapture={capturePhotoFromVideo}
+        />
       )}
-      </div>
+
+      {/* Describe Modal */}
+      {showDescribeModal && (
+        <DescribeModal
+          description={description}
+          onDescriptionChange={setDescription}
+          onClose={() => {
+            setShowDescribeModal(false);
+            setDescription('');
+          }}
+          onAnalyze={handleDescribeAnalyze}
+          canAnalyze={canPerformScan && description.trim().length > 0}
+        />
+      )}
     </div>
   );
 }
 
-function LoadingScreen() {
+function LoadingScreen({ type }: { type: 'scan' | 'describe' }) {
   const [loadingMessage, setLoadingMessage] = useState(0);
-  const messages = [
-    'Detecting gym selfies...',
-    'Analyzing bio cringe...',
-    'Counting fish pics...',
-    'Checking for red flags...',
-  ];
+  const messages = type === 'scan' 
+    ? [
+        'Detecting gym selfies...',
+        'Analyzing bio cringe...',
+        'Counting fish pics...',
+        'Checking for red flags...',
+      ]
+    : [
+        'Analyzing description...',
+        'Detecting red flags...',
+        'Examining warning signs...',
+        'Generating report...',
+      ];
 
   useEffect(() => {
     const interval = setInterval(() => {
       setLoadingMessage((prev) => (prev + 1) % messages.length);
     }, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [messages.length]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 bg-black">
       <div className="w-full max-w-md text-center">
         <div className="mb-8 animate-fade-in">
           <div className="mb-6 inline-block rounded-full bg-gradient-primary p-8 shadow-glow-md animate-pulse-glow">
-            <Camera className="h-16 w-16 text-white" />
+            {type === 'scan' ? (
+              <Camera className="h-16 w-16 text-white" />
+            ) : (
+              <Sparkles className="h-16 w-16 text-white" />
+            )}
           </div>
           <h2 className="mb-3 text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             Analyzing<span className="animate-pulse">...</span>
@@ -814,6 +788,210 @@ function LoadingScreen() {
 
         <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-black/50 border border-white/10 backdrop-blur-xl">
           <div className="h-full animate-progress bg-gradient-progress shadow-glow-orange" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PaywallModal({ onClose, onCheckout }: { onClose: () => void; onCheckout: (plan: 'pro' | 'lifetime') => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-6 backdrop-blur-md animate-fade-in">
+      <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-black/90 backdrop-blur-2xl p-8 shadow-2xl animate-slide-up">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-xl p-2 text-gray-400 transition-all hover:bg-white/10 hover:text-white"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="mb-8 text-center">
+          <div className="mb-4 text-6xl">🚫</div>
+          <h2 className="mb-2 text-3xl font-bold text-white">
+            Scan limit reached
+          </h2>
+          <p className="text-gray-400">
+            Upgrade to Pro for unlimited scans!
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="relative rounded-3xl border-2 border-indigo-500/50 bg-gradient-to-br from-indigo-600/20 to-indigo-600/10 backdrop-blur-xl p-6 shadow-glow-md hover:border-indigo-500 transition-all duration-300">
+            <div className="absolute right-4 top-4 rounded-full bg-gradient-primary px-3 py-1 text-xs font-bold text-white shadow-glow-sm">
+              Recommended
+            </div>
+            <div className="mb-3">
+              <h3 className="mb-1 text-2xl font-bold text-white">Pro</h3>
+              <p className="text-sm text-gray-400">Unlimited scans</p>
+            </div>
+            <div className="mb-5">
+              <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$6.99</span>
+              <span className="text-gray-400 ml-2">/month</span>
+            </div>
+            <button
+              onClick={() => onCheckout('pro')}
+              className="w-full rounded-xl glow-button px-4 py-4 font-bold text-white min-h-[56px] transition-all duration-300"
+            >
+              Choose Pro
+            </button>
+          </div>
+
+          <div className="relative rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-6 glass-card">
+            <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-pink-500/80 to-purple-500/80 px-3 py-1 text-xs font-bold text-white shadow-glow-sm">
+              Best value
+            </div>
+            <div className="mb-3">
+              <h3 className="mb-1 text-2xl font-bold text-white">Lifetime</h3>
+              <p className="text-sm text-gray-400">Lifetime access</p>
+            </div>
+            <div className="mb-2">
+              <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$49.99</span>
+              <span className="text-gray-400 ml-2">one-time</span>
+            </div>
+            <div className="mb-5">
+              <span className="text-sm text-gray-500 line-through">Normally $79.99</span>
+            </div>
+            <button
+              onClick={() => onCheckout('lifetime')}
+              className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-4 py-4 font-bold text-white min-h-[56px] transition-all hover:border-pink-500/50 hover:bg-pink-500/10 hover:shadow-glow-pink"
+            >
+              Choose Lifetime
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CameraModal({ videoRef, isCameraLoading, onClose, onCapture }: { 
+  videoRef: React.RefObject<HTMLVideoElement>; 
+  isCameraLoading: boolean; 
+  onClose: () => void;
+  onCapture: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-6 backdrop-blur-md animate-fade-in">
+      <div className="relative w-full max-w-2xl rounded-3xl border border-white/10 bg-black/90 backdrop-blur-2xl p-8 shadow-2xl animate-slide-up">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-xl p-2 text-gray-400 transition-all hover:bg-white/10 hover:text-white z-10"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="mb-6 text-center">
+          <h2 className="mb-2 text-2xl font-bold text-white">
+            Take a Photo
+          </h2>
+          <p className="text-sm text-gray-400">
+            Position your camera and click capture
+          </p>
+        </div>
+
+        <div className="relative rounded-2xl overflow-hidden bg-black border border-white/10 mb-6 min-h-[300px] flex items-center justify-center">
+          {isCameraLoading && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <div className="text-center">
+                <div className="mb-4 inline-block rounded-full bg-gradient-primary p-4 shadow-glow-md animate-pulse">
+                  <Camera className="h-8 w-8 text-white" />
+                </div>
+                <p className="text-gray-400 text-sm">Starting camera...</p>
+              </div>
+            </div>
+          )}
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-auto max-h-[60vh] object-contain"
+          />
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 border-4 border-white/20 rounded-2xl" style={{
+              clipPath: 'inset(20% 10% 20% 10%)'
+            }} />
+          </div>
+        </div>
+
+        <div className="flex gap-4">
+          <button
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-6 py-4 font-bold text-white transition-all hover:bg-white/10"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onCapture}
+            className="flex-1 rounded-xl glow-button px-6 py-4 font-bold text-white transition-all duration-300"
+          >
+            Capture Photo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DescribeModal({ description, onDescriptionChange, onClose, onAnalyze, canAnalyze }: {
+  description: string;
+  onDescriptionChange: (value: string) => void;
+  onClose: () => void;
+  onAnalyze: () => void;
+  canAnalyze: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-6 backdrop-blur-md animate-fade-in">
+      <div className="relative w-full max-w-2xl rounded-3xl border border-white/10 bg-black/90 backdrop-blur-2xl p-8 shadow-2xl animate-slide-up">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-xl p-2 text-gray-400 transition-all hover:bg-white/10 hover:text-white"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="mb-6 text-center">
+          <div className="mb-4 inline-block rounded-full bg-gradient-to-r from-pink-500 to-purple-500 p-6 shadow-[0_0_25px_rgba(236,72,153,0.5)]">
+            <Sparkles className="h-10 w-10 text-white" />
+          </div>
+          <h2 className="mb-2 text-3xl font-bold text-white">
+            Describe this person
+          </h2>
+          <p className="text-sm text-gray-400">
+            Ex: "She says she's a CEO at 23 years old and travels a lot..."
+          </p>
+        </div>
+
+        <div className="mb-6">
+          <div className="relative group/textarea">
+            <div className="absolute -inset-0.5 rounded-2xl bg-gradient-primary opacity-0 group-focus-within/textarea:opacity-30 blur-md transition-opacity duration-300" />
+            <textarea
+              value={description}
+              onChange={(e) => onDescriptionChange(e.target.value)}
+              placeholder="Enter a textual description of the person..."
+              className="relative w-full min-h-[240px] rounded-2xl border-2 border-white/30 bg-gradient-to-br from-black/70 via-black/60 to-black/70 backdrop-blur-xl px-6 py-5 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/70 focus:ring-4 focus:ring-indigo-500/20 focus:bg-black/80 transition-all duration-300 resize-none text-base shadow-[inset_0_2px_15px_rgba(0,0,0,0.5)]"
+              maxLength={2000}
+            />
+          </div>
+          <div className="flex justify-between items-center text-sm text-gray-400 font-medium mt-3">
+            <span>{description.length}/2000 characters</span>
+          </div>
+        </div>
+
+        <div className="flex gap-4">
+          <button
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-6 py-4 font-bold text-white transition-all hover:bg-white/10"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onAnalyze}
+            disabled={!canAnalyze}
+            className="flex-1 rounded-xl glow-button px-6 py-4 font-bold text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Analyze red flags
+          </button>
         </div>
       </div>
     </div>

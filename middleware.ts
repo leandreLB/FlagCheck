@@ -6,6 +6,14 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/api/webhooks/stripe(.*)',
   '/api/stripe/webhook(.*)',
+  '/', // Page principale accessible sans authentification
+])
+
+// Routes qui nécessitent une authentification
+const isProtectedRoute = createRouteMatcher([
+  '/profile(.*)',
+  '/history(.*)',
+  '/results(.*)',
 ])
 
 export default clerkMiddleware(async (auth, request) => {
@@ -15,7 +23,7 @@ export default clerkMiddleware(async (auth, request) => {
   }
   
   // Vérifier si la route nécessite une authentification
-  if (!isPublicRoute(request)) {
+  if (isProtectedRoute(request)) {
     const { userId } = await auth()
     
     // Si l'utilisateur n'est pas authentifié, rediriger vers /sign-in

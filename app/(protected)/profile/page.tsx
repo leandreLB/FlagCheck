@@ -10,7 +10,10 @@ import {
   TrendingUp, 
   AlertTriangle,
   Sparkles,
-  X
+  X,
+  Gift,
+  Copy,
+  Check
 } from 'lucide-react';
 import { ScanRecord } from '@/lib/types';
 
@@ -20,10 +23,18 @@ export default function ProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [subscriptionStatus, setSubscriptionStatus] = useState<'free' | 'pro' | 'lifetime'>('free');
+  const [subscriptionPlan, setSubscriptionPlan] = useState<'free' | 'pro_monthly' | 'pro_annual'>('free');
+  const [freeScansRemaining, setFreeScansRemaining] = useState<number>(3);
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [referralCode, setReferralCode] = useState<string>('');
+  const [referralStats, setReferralStats] = useState({ referralCount: 0, remainingForReward: 3 });
+  const [copied, setCopied] = useState(false);
+  const [showReferralInput, setShowReferralInput] = useState(false);
+  const [referralInput, setReferralInput] = useState('');
+  const [isUsingCode, setIsUsingCode] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -33,7 +44,13 @@ export default function ProfilePage() {
       const subResponse = await fetch('/api/subscription/check');
       if (subResponse.ok) {
         const subData = await subResponse.json();
-        setSubscriptionStatus(subData.status);
+        // Support both old and new format for compatibility
+        setSubscriptionStatus(subData.status || (subData.plan === 'free' ? 'free' : 'pro'));
+        setSubscriptionPlan(subData.plan || (subData.status === 'lifetime' ? 'pro_monthly' : subData.status === 'pro' ? 'pro_monthly' : 'free'));
+        setFreeScansRemaining(subData.freeScansRemaining ?? subData.scansRemaining ?? 3);
+      } else if (subResponse.status === 401) {
+        // User not authenticated - not an error, just skip
+        return;
       }
 
       // Fetch scans for stats
@@ -44,10 +61,60 @@ export default function ProfilePage() {
         const scansArray = Array.isArray(scansData) ? scansData : [];
         setScans(scansArray);
         console.log('Scans loaded:', scansArray.length, scansArray);
+      } else if (scansResponse.status === 401) {
+        // User not authenticated - not an error, just skip
+        setScans([]);
       } else {
-        console.error('Failed to fetch scans:', scansResponse.status);
         setScans([]);
       }
+
+      // Fetch referral code
+      const referralResponse = await fetch('/api/referral/my-code');
+      if (referralResponse.ok) {
+        const referralData = await referralResponse.json();
+        if (referralData.referralCode) {
+          setReferralCode(referralData.referralCode);
+        } else if (referralData.error) {
+          // Only log non-401 errors
+          if (referralData.error !== 'Unauthorized') {
+            console.error('Error fetching referral code:', referralData.error);
+            console.error('Error details:', referralData.details);
+            // Si c'est une erreur de colonne manquante, afficher un message d'aide
+            if (referralData.details?.includes('SQL migration')) {
+              console.warn('⚠️ Please run the SQL migration script: add_referral_columns.sql');
+            }
+          }
+        }
+      } else if (referralResponse.status === 401) {
+        // User not authenticated - not an error, just skip
+      } else {
+        // Only log non-401 errors
+        try {
+          const errorData = await referralResponse.json();
+          if (errorData.error !== 'Unauthorized') {
+            console.error('Failed to fetch referral code:', referralResponse.status);
+            console.error('Error:', errorData.error);
+            console.error('Details:', errorData.details);
+            // Si c'est une erreur de colonne manquante, afficher un message d'aide
+            if (errorData.details?.includes('SQL migration') || errorData.details?.includes('referral_code column')) {
+              console.warn('⚠️ Please run the SQL migration script: add_referral_columns.sql in Supabase');
+            }
+          }
+        } catch {
+          // Ignore JSON parsing errors
+        }
+      }
+
+      // Fetch referral stats
+      const statsResponse = await fetch('/api/referral/stats');
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setReferralStats({
+          referralCount: statsData.referralCount || 0,
+          remainingForReward: statsData.remainingForReward || 3,
+        });
+      }
+      // 401 errors for stats are also not critical, just skip
     } catch (error) {
       console.error('Error loading data:', error);
       setScans([]);
@@ -57,7 +124,12 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    fetchData();
+    // Only fetch data if user is loaded
+    if (user) {
+      fetchData();
+    } else {
+      setIsLoading(false);
+    }
 
     // Si on revient de Stripe avec un session_id, attendre que le webhook soit traité puis rafraîchir
     const sessionId = searchParams.get('session_id');
@@ -73,34 +145,11 @@ export default function ProfilePage() {
       
       return () => clearTimeout(timeout);
     }
-  }, [searchParams, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, router, user?.id]);
 
   const handleUpgrade = async () => {
-    try {
-      // Convert 'pro' to 'monthly' to match the API
-      const response = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceType: 'monthly' }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('API Error:', errorData);
-        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('Payment URL not received');
-      }
-    } catch (err) {
-      console.error('Checkout error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Payment failed. Please try again.';
-      alert(errorMessage);
-    }
+    router.push('/paywall');
   };
 
   const handleCancelSubscription = async () => {
@@ -156,6 +205,51 @@ export default function ProfilePage() {
     }
   };
 
+  const handleCopyReferralCode = async () => {
+    if (!referralCode) return;
+    
+    try {
+      await navigator.clipboard.writeText(referralCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+      alert('Failed to copy code');
+    }
+  };
+
+  const handleUseReferralCode = async () => {
+    if (!referralInput || referralInput.length !== 6) {
+      alert('Please enter a valid 6-character code');
+      return;
+    }
+
+    setIsUsingCode(true);
+    try {
+      const response = await fetch('/api/referral/use-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: referralInput }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to apply referral code');
+      }
+
+      alert('Referral code applied successfully! 🎉');
+      setShowReferralInput(false);
+      setReferralInput('');
+      fetchData(); // Refresh stats
+    } catch (error) {
+      console.error('Error using referral code:', error);
+      alert(error instanceof Error ? error.message : 'Failed to apply referral code');
+    } finally {
+      setIsUsingCode(false);
+    }
+  };
+
   // Calculate stats - ensure scans is an array
   const totalScans = Array.isArray(scans) ? scans.length : 0;
   
@@ -194,11 +288,14 @@ export default function ProfilePage() {
   const mostCommonFlag = Object.entries(flagCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'None';
 
   const getSubscriptionBadge = () => {
-    if (subscriptionStatus === 'pro') {
+    if (subscriptionStatus === 'pro' || subscriptionPlan === 'pro_monthly' || subscriptionPlan === 'pro_annual') {
+      const isAnnual = subscriptionPlan === 'pro_annual';
       return (
         <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600/20 to-indigo-600/10 backdrop-blur-xl px-5 py-3 border border-indigo-600/30 shadow-glow-sm">
           <Crown className="h-5 w-5 text-indigo-400" />
-          <span className="font-bold text-indigo-400">Pro Member - $6.99/month</span>
+          <span className="font-bold text-indigo-400">
+            {isAnnual ? 'Annual Pro Member - €79.99/year' : 'Pro Member - €9.99/month'}
+          </span>
           <button
             onClick={handleCancelSubscription}
             className="ml-auto rounded-lg px-3 py-1 text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-all"
@@ -207,18 +304,10 @@ export default function ProfilePage() {
           </button>
         </div>
       );
-    } else if (subscriptionStatus === 'lifetime') {
-      return (
-        <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-pink-600/20 to-pink-600/10 backdrop-blur-xl px-5 py-3 border border-pink-600/30 shadow-glow-pink">
-          <Sparkles className="h-5 w-5 text-pink-400" />
-          <span className="font-bold text-pink-400">Lifetime Member ⭐</span>
-        </div>
-      );
     } else {
-      const remainingScans = Math.max(0, 3 - totalScans);
       return (
         <div className="flex items-center gap-2 rounded-2xl bg-black/50 backdrop-blur-xl px-5 py-3 border border-white/10 glass-card">
-          <span className="text-gray-400 font-semibold">{remainingScans} free scans remaining</span>
+          <span className="text-gray-400 font-semibold">{freeScansRemaining} free scans remaining</span>
         </div>
       );
     }
@@ -421,6 +510,71 @@ export default function ProfilePage() {
             </div>
           </div>
 
+          {/* Referral Section */}
+          <div className="group relative rounded-3xl border border-white/10 bg-gradient-to-br from-black/70 via-black/60 to-black/70 backdrop-blur-2xl p-6 shadow-[0_8px_40px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.1)] hover:border-indigo-500/30 hover:shadow-[0_12px_48px_rgba(99,102,241,0.3)] transition-all duration-500 animate-slide-up" style={{ animationDelay: '0.35s' }}>
+            <div className="absolute -inset-1 rounded-3xl bg-gradient-primary blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+            <div className="relative z-10">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="rounded-xl bg-gradient-to-br from-pink-500/30 to-purple-500/30 p-2 border border-pink-500/40">
+                  <Gift className="h-5 w-5 text-pink-400" />
+                </div>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Referral Program
+                </h3>
+              </div>
+
+              {/* Your Referral Code */}
+              <div className="mb-6">
+                <p className="text-sm text-gray-400 mb-3">Your referral code</p>
+                {referralCode ? (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 rounded-xl border-2 border-pink-500/50 bg-black/50 px-4 py-3 font-mono text-xl font-bold text-white text-center">
+                        {referralCode}
+                      </div>
+                      <button
+                        onClick={handleCopyReferralCode}
+                        className="rounded-xl bg-gradient-primary px-4 py-3 font-bold text-white transition-all hover:scale-105 hover:shadow-glow-sm"
+                      >
+                        {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Share this code with friends</p>
+                  </>
+                ) : (
+                  <div className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-center">
+                    <p className="text-sm text-gray-500">Loading your referral code...</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Referral Stats */}
+              <div className="mb-4 rounded-xl border border-white/5 bg-black/30 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-400">Friends referred</span>
+                  <span className="text-2xl font-bold text-white">{referralStats.referralCount}</span>
+                </div>
+                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-primary transition-all duration-300"
+                    style={{ width: `${(referralStats.referralCount % 3) * 33.33}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {referralStats.remainingForReward} more friend{referralStats.remainingForReward !== 1 ? 's' : ''} to get 1 week of Pro free!
+                </p>
+              </div>
+
+              {/* Use Referral Code Button */}
+              <button
+                onClick={() => setShowReferralInput(true)}
+                className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-4 py-3 font-bold text-white transition-all hover:border-pink-500/50 hover:bg-pink-500/10"
+              >
+                Enter a referral code
+              </button>
+            </div>
+          </div>
+
           {/* Actions - Ultra Premium */}
           <div className="space-y-4 animate-slide-up" style={{ animationDelay: '0.4s' }}>
             <button
@@ -444,6 +598,65 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Referral Code Input Modal */}
+      {showReferralInput && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-6 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-black/90 backdrop-blur-2xl p-8 shadow-2xl animate-slide-up">
+            <button
+              onClick={() => {
+                setShowReferralInput(false);
+                setReferralInput('');
+              }}
+              className="absolute right-4 top-4 rounded-xl p-2 text-gray-400 transition-all hover:bg-white/10 hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="mb-8 text-center">
+              <div className="mb-5 inline-flex rounded-full bg-pink-500/20 p-4 border border-pink-500/30">
+                <Gift className="h-10 w-10 text-pink-400" />
+              </div>
+              <h2 className="mb-3 text-3xl font-bold text-white">
+                Enter Referral Code
+              </h2>
+              <p className="text-gray-400">
+                Have a friend's referral code? Enter it here!
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <input
+                type="text"
+                value={referralInput}
+                onChange={(e) => setReferralInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+                placeholder="ABC123"
+                className="w-full rounded-xl border-2 border-white/20 bg-black/50 backdrop-blur-xl px-4 py-4 font-mono text-2xl font-bold text-white text-center focus:border-pink-500/50 focus:outline-none transition-all"
+                maxLength={6}
+              />
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  setShowReferralInput(false);
+                  setReferralInput('');
+                }}
+                className="flex-1 rounded-xl border border-white/10 bg-black/50 backdrop-blur-xl px-4 py-4 font-bold text-white min-h-[56px] transition-all hover:border-white/20 hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUseReferralCode}
+                disabled={isUsingCode || referralInput.length !== 6}
+                className="flex-1 rounded-xl bg-gradient-primary px-4 py-4 font-bold text-white min-h-[56px] transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUsingCode ? 'Applying...' : 'Apply Code'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

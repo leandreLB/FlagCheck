@@ -102,7 +102,7 @@ export async function POST(request: Request) {
         );
       }
 
-      if (!priceType || (priceType !== "monthly" && priceType !== "lifetime")) {
+      if (!priceType || (priceType !== "pro_monthly" && priceType !== "pro_annual")) {
         console.error("❌ priceType invalide:", priceType);
         return NextResponse.json(
           { error: "priceType invalide" },
@@ -110,22 +110,38 @@ export async function POST(request: Request) {
         );
       }
 
-      // Déterminer le statut d'abonnement
-      // "monthly" = pro, "lifetime" = lifetime
-      const subscriptionStatus = priceType === "monthly" ? "pro" : "lifetime";
+      // Déterminer le plan d'abonnement
+      const subscriptionPlan: "pro_monthly" | "pro_annual" = priceType as "pro_monthly" | "pro_annual";
 
-      // Récupérer l'ID de l'abonnement si c'est Pro (subscription récurrente)
+      // Récupérer l'ID de l'abonnement (les deux plans sont des subscriptions)
       let subscriptionId: string | null = null;
-      if (priceType === "monthly" && session.subscription) {
+      if (session.subscription) {
         subscriptionId =
           typeof session.subscription === "string"
             ? session.subscription
             : session.subscription.id;
       }
 
+      // Calculer les dates
+      const subscriptionStartDate = new Date().toISOString();
+      let nextBillingDate: string | undefined;
+      
+      if (subscriptionId) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          if (subscription.current_period_end) {
+            nextBillingDate = new Date(subscription.current_period_end * 1000).toISOString();
+          }
+        } catch (err) {
+          console.error("Error retrieving subscription for billing date:", err);
+        }
+      }
+
       console.log("💾 Sauvegarde dans Supabase...");
-      console.log("   - subscription_status:", subscriptionStatus);
+      console.log("   - subscription_plan:", subscriptionPlan);
       console.log("   - subscription_id:", subscriptionId);
+      console.log("   - subscription_start_date:", subscriptionStartDate);
+      console.log("   - next_billing_date:", nextBillingDate);
 
       // Vérifier si l'utilisateur existe déjà
       const { data: existingUser } = await supabase
@@ -134,15 +150,20 @@ export async function POST(request: Request) {
         .eq("user_id", userId)
         .single();
 
+      const updateData: any = {
+        subscription_plan: subscriptionPlan,
+        subscription_id: subscriptionId,
+        subscription_start_date: subscriptionStartDate,
+        next_billing_date: nextBillingDate,
+        free_scans_remaining: 3, // Reset free scans when upgrading
+      };
+
       if (existingUser) {
         console.log("👤 User exists, updating...");
         
         const { error: updateError } = await supabase
           .from("users")
-          .update({
-            subscription_status: subscriptionStatus,
-            subscription_id: subscriptionId,
-          })
+          .update(updateData)
           .eq("user_id", userId);
 
         if (updateError) {
@@ -159,8 +180,7 @@ export async function POST(request: Request) {
         
         const { error: insertError } = await supabase.from("users").insert({
           user_id: userId,
-          subscription_status: subscriptionStatus,
-          subscription_id: subscriptionId,
+          ...updateData,
         });
 
         if (insertError) {
@@ -186,7 +206,7 @@ export async function POST(request: Request) {
       let user = null;
       const { data: userBySubscription } = await supabase
         .from("users")
-        .select("user_id, subscription_status")
+        .select("user_id, subscription_plan")
         .eq("subscription_id", subscription.id)
         .single();
 
@@ -201,11 +221,9 @@ export async function POST(request: Request) {
         return NextResponse.json({ received: true }, { status: 200 });
       }
 
-      // Si l'utilisateur a un abonnement Lifetime, ne pas modifier son statut
-      if (user.subscription_status === "lifetime") {
-        console.log("✅ User has lifetime subscription, skipping update");
-        return NextResponse.json({ received: true }, { status: 200 });
-      }
+      // Déterminer le plan depuis les métadonnées de la subscription ou garder le plan actuel
+      const planFromMetadata = subscription.metadata?.priceType;
+      const subscriptionPlan = (planFromMetadata === "pro_annual" ? "pro_annual" : "pro_monthly") as "pro_monthly" | "pro_annual";
 
       // Vérifier le statut de l'abonnement Stripe
       // active = abonnement actif et payé
@@ -218,13 +236,20 @@ export async function POST(request: Request) {
         subscription.status === "active" ||
         subscription.status === "trialing"
       ) {
-        // Abonnement actif, s'assurer que le statut est "pro"
-        console.log("✅ Subscription is active, ensuring Pro status");
+        // Abonnement actif, s'assurer que le plan est correct
+        console.log("✅ Subscription is active, ensuring Pro plan");
+        
+        const nextBillingDate = subscription.current_period_end
+          ? new Date(subscription.current_period_end * 1000).toISOString()
+          : undefined;
+
         const { error: updateError } = await supabase
           .from("users")
           .update({
-            subscription_status: "pro",
+            subscription_plan: subscriptionPlan,
             subscription_id: subscription.id,
+            next_billing_date: nextBillingDate,
+            free_scans_remaining: 3, // Reset free scans
           })
           .eq("user_id", user.user_id);
 
@@ -235,7 +260,7 @@ export async function POST(request: Request) {
             { status: 500 }
           );
         }
-        console.log("✅ User status updated to Pro");
+        console.log("✅ User plan updated to", subscriptionPlan);
       } else if (
         subscription.status === "past_due" ||
         subscription.status === "unpaid" ||
@@ -248,8 +273,9 @@ export async function POST(request: Request) {
         const { error: updateError } = await supabase
           .from("users")
           .update({
-            subscription_status: "free",
+            subscription_plan: "free",
             subscription_id: null,
+            free_scans_remaining: 3, // Reset free scans when downgrading
           })
           .eq("user_id", user.user_id);
 
@@ -274,7 +300,7 @@ export async function POST(request: Request) {
       // Get user by subscription_id
       const { data: user } = await supabase
         .from("users")
-        .select("user_id, subscription_status")
+        .select("user_id, subscription_plan")
         .eq("subscription_id", subscription.id)
         .single();
 
@@ -283,19 +309,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ received: true }, { status: 200 });
       }
 
-      // Si l'utilisateur a un abonnement Lifetime, ne pas modifier son statut
-      if (user.subscription_status === "lifetime") {
-        console.log("✅ User has lifetime subscription, skipping deletion");
-        return NextResponse.json({ received: true }, { status: 200 });
-      }
-
       console.log("👤 User found, switching to free...");
       
       const { error: updateError } = await supabase
         .from("users")
         .update({
-          subscription_status: "free",
+          subscription_plan: "free",
           subscription_id: null,
+          free_scans_remaining: 3, // Reset free scans when canceling
         })
         .eq("user_id", user.user_id);
 
@@ -330,7 +351,7 @@ export async function POST(request: Request) {
         // Get user by subscription_id
         const { data: user } = await supabase
           .from("users")
-          .select("user_id, subscription_status")
+          .select("user_id, subscription_plan")
           .eq("subscription_id", subscriptionId)
           .single();
 
@@ -339,19 +360,14 @@ export async function POST(request: Request) {
           return NextResponse.json({ received: true }, { status: 200 });
         }
 
-        // Si l'utilisateur a un abonnement Lifetime, ne pas modifier son statut
-        if (user.subscription_status === "lifetime") {
-          console.log("✅ User has lifetime subscription, skipping payment failure");
-          return NextResponse.json({ received: true }, { status: 200 });
-        }
-
         console.log("🚫 Payment failed for Pro subscription, removing Pro access");
         
         const { error: updateError } = await supabase
           .from("users")
           .update({
-            subscription_status: "free",
+            subscription_plan: "free",
             subscription_id: null,
+            free_scans_remaining: 3, // Reset free scans when payment fails
           })
           .eq("user_id", user.user_id);
 

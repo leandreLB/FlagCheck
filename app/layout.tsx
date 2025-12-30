@@ -54,6 +54,25 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="fr" style={{ backgroundColor: '#000000' }}>
         <head>
+          {/* Critical CSS inline pour éliminer le flash blanc - DOIT être AVANT tout autre CSS */}
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+                html, body {
+                  margin: 0;
+                  padding: 0;
+                  background-color: #000000 !important;
+                  width: 100%;
+                  min-height: 100%;
+                }
+                #__next, [data-nextjs-scroll-focus-boundary] {
+                  width: 100%;
+                  min-height: 100vh;
+                  background-color: #000000 !important;
+                }
+              `,
+            }}
+          />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />

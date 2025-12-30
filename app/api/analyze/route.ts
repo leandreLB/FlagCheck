@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import OpenAI from "openai";
 import { supabase } from "@/lib/supabase";
 import { ScanRecord } from "@/lib/types";
-import { getUserSubscription } from "@/lib/subscription";
+import { getUserSubscription, hasProAccess, decrementFreeScans } from "@/lib/subscription";
 
 export const runtime = "nodejs";
 
@@ -56,10 +56,11 @@ export async function POST(request: Request) {
 
     // Check subscription and remaining scans
     const subscription = await getUserSubscription(userId);
-    console.log("📊 Subscription status:", subscription.status, "Scans remaining:", subscription.scansRemaining);
+    const hasPro = await hasProAccess(userId);
+    console.log("📊 Subscription plan:", subscription.plan, "Has Pro:", hasPro, "Scans remaining:", subscription.scansRemaining);
 
     // Check if user can perform a scan
-    if (subscription.status === "free" && subscription.scansRemaining !== null && subscription.scansRemaining <= 0) {
+    if (!hasPro && subscription.scansRemaining !== null && subscription.scansRemaining <= 0) {
       console.log("🚫 Free scan limit reached");
       return NextResponse.json(
         { error: "Free scan limit reached. Upgrade to Pro!" },
@@ -278,6 +279,12 @@ export async function POST(request: Request) {
     }
 
     console.log("✅ Scan saved with ID:", data.id);
+
+    // Décrémenter les scans gratuits si l'utilisateur est gratuit
+    if (!hasPro) {
+      const remainingScans = await decrementFreeScans(userId);
+      console.log("📉 Free scans remaining after scan:", remainingScans);
+    }
 
     return NextResponse.json(
       {
