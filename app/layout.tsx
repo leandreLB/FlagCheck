@@ -60,20 +60,24 @@ export default function RootLayout({
               __html: `
                 html {
                   background-color: #0F0F0F !important;
-                  margin: 0;
-                  padding: 0;
-                  width: 100%;
-                  height: 100%;
+                  margin: 0 !important;
+                  padding: 0 !important;
+                  width: 100% !important;
+                  height: 100% !important;
                 }
                 
                 body {
-                  margin: 0;
-                  padding: 0;
+                  margin: 0 !important;
+                  padding: 0 !important;
                   background-color: #0F0F0F !important;
-                  width: 100%;
-                  height: 100%;
+                  width: 100% !important;
+                  height: 100% !important;
                   overflow-x: hidden;
                   -webkit-tap-highlight-color: transparent;
+                }
+                
+                * {
+                  box-sizing: border-box;
                 }
                 
                 #__next, [data-nextjs-scroll-focus-boundary] {
