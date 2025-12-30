@@ -8,7 +8,7 @@ Créez cette table dans votre base de données Supabase avec la structure suivan
 CREATE TABLE self_tests (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id TEXT NOT NULL,
-  testId TEXT NOT NULL UNIQUE,
+  "testId" TEXT NOT NULL UNIQUE,
   date TIMESTAMPTZ NOT NULL,
   scores JSONB NOT NULL,
   answers INTEGER[] NOT NULL,
@@ -20,6 +20,7 @@ CREATE TABLE self_tests (
 CREATE INDEX idx_self_tests_user_id ON self_tests(user_id);
 CREATE INDEX idx_self_tests_date ON self_tests(date DESC);
 CREATE INDEX idx_self_tests_user_date ON self_tests(user_id, date DESC);
+CREATE INDEX idx_self_tests_testId ON self_tests("testId");
 
 -- RLS (Row Level Security) - Autoriser la lecture et écriture pour l'utilisateur authentifié
 ALTER TABLE self_tests ENABLE ROW LEVEL SECURITY;

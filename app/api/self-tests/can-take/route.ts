@@ -15,8 +15,8 @@ export async function GET() {
     // Récupérer le statut d'abonnement
     const subscription = await getUserSubscription(userId);
 
-    // Les utilisateurs Pro et Lifetime ont des tests illimités
-    if (subscription.status === 'pro' || subscription.status === 'lifetime') {
+    // Les utilisateurs Pro ont des tests illimités
+    if (subscription.plan === 'pro_monthly' || subscription.plan === 'pro_annual') {
       return NextResponse.json({ canTake: true });
     }
 
@@ -27,7 +27,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('self_tests')
-      .select('testId')
+      .select('testid') // Utiliser testid (minuscules) pour correspondre à la colonne PostgreSQL
       .eq('user_id', userId)
       .eq('completed', true)
       .gte('date', startOfMonthISO)

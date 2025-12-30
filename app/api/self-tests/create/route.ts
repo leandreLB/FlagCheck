@@ -40,36 +40,63 @@ export async function POST(request: Request) {
     const testId = crypto.randomUUID();
     const date = new Date().toISOString();
 
+    console.log('Creating self test with data:', {
+      userId,
+      testId,
+      date,
+      scores,
+      answersLength: answers.length,
+    });
+
+    const insertData = {
+      user_id: userId,
+      testid: testId, // Utiliser testid (minuscules) pour correspondre à la colonne PostgreSQL
+      date,
+      scores: {
+        communication: scores.communication,
+        boundaries: scores.boundaries,
+        attachment: scores.attachment,
+        honesty: scores.honesty,
+        toxic: scores.toxic,
+        total: scores.total,
+      },
+      answers,
+      completed: true,
+    };
+
+    console.log('Insert data:', JSON.stringify(insertData, null, 2));
+
     const { data, error } = await supabase
       .from('self_tests')
-      .insert({
-        user_id: userId,
-        testId,
-        date,
-        scores: {
-          communication: scores.communication,
-          boundaries: scores.boundaries,
-          attachment: scores.attachment,
-          honesty: scores.honesty,
-          toxic: scores.toxic,
-          total: scores.total,
-        },
-        answers,
-        completed: true,
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (error) {
       console.error('Error creating self test:', error);
+      console.error('Error code:', error.code);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
+      
+      // Vérifier si c'est une erreur de table manquante
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        return NextResponse.json(
+          { 
+            error: 'Database table not found. Please run the SQL script to create the self_tests table.',
+            details: 'The self_tests table does not exist in your Supabase database. Please execute the SQL script in create_self_tests_table.sql'
+          },
+          { status: 500 }
+        );
+      }
+      
       return NextResponse.json(
-        { error: 'Failed to create self test', details: error.message },
+        { error: 'Failed to create self test', details: error.message, code: error.code },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
-      testId: data.testId,
+      testId: data.testid || data.testId, // Support les deux formats pour compatibilité
       date: data.date,
       scores: data.scores,
       answers: data.answers,
