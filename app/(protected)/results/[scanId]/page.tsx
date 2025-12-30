@@ -252,13 +252,12 @@ export default function ResultsPage() {
     }, 300);
   };
 
-  const handleCheckout = async (plan: 'pro' | 'lifetime') => {
+  const handleCheckout = async (plan: 'pro_monthly' | 'pro_annual') => {
     try {
-      const priceType = plan === 'pro' ? 'monthly' : 'lifetime';
       const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceType }),
+        body: JSON.stringify({ priceType: plan }),
       });
 
       if (!response.ok) {
@@ -504,34 +503,34 @@ export default function ResultsPage() {
                   <span className="text-gray-400 ml-2">/month</span>
                 </div>
                 <button
-                  onClick={() => handleCheckout('pro')}
+                  onClick={() => handleCheckout('pro_monthly')}
                   className="w-full rounded-xl glow-button px-4 py-4 font-bold text-white min-h-[56px] transition-all duration-300"
                 >
                   Choose Pro
                 </button>
               </div>
 
-              {/* Lifetime Plan */}
+              {/* Annual Plan */}
               <div className="relative rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-6 glass-card">
                 <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-pink-500/80 to-purple-500/80 px-3 py-1 text-xs font-bold text-white shadow-glow-sm">
                   Best value
                 </div>
                 <div className="mb-3">
-                  <h3 className="mb-1 text-2xl font-bold text-white">Lifetime</h3>
-                  <p className="text-sm text-gray-400">Lifetime access</p>
+                  <h3 className="mb-1 text-2xl font-bold text-white">Annual</h3>
+                  <p className="text-sm text-gray-400">Annual access</p>
                 </div>
                 <div className="mb-2">
                   <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$49.99</span>
-                  <span className="text-gray-400 ml-2">one-time</span>
+                  <span className="text-gray-400 ml-2">/year</span>
                 </div>
                 <div className="mb-5">
                   <span className="text-sm text-gray-500 line-through">Normally $79.99</span>
                 </div>
                 <button
-                  onClick={() => handleCheckout('lifetime')}
+                  onClick={() => handleCheckout('pro_annual')}
                   className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-4 py-4 font-bold text-white min-h-[56px] transition-all hover:border-pink-500/50 hover:bg-pink-500/10 hover:shadow-glow-pink"
                 >
-                  Choose Lifetime
+                  Choose Annual
                 </button>
               </div>
             </div>

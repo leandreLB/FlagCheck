@@ -203,7 +203,7 @@ export default function HomePage() {
     }
   };
 
-  const handleCheckout = async (plan: 'pro' | 'lifetime') => {
+  const handleCheckout = async (plan: 'pro_monthly' | 'pro_annual') => {
     if (!userId) {
       const currentUrl = window.location.pathname;
       router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`);
@@ -211,11 +211,10 @@ export default function HomePage() {
     }
 
     try {
-      const priceType = plan === 'pro' ? 'monthly' : 'lifetime';
       const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceType }),
+        body: JSON.stringify({ priceType: plan }),
       });
 
       if (!response.ok) {
@@ -794,7 +793,7 @@ function LoadingScreen({ type }: { type: 'scan' | 'describe' }) {
   );
 }
 
-function PaywallModal({ onClose, onCheckout }: { onClose: () => void; onCheckout: (plan: 'pro' | 'lifetime') => void }) {
+function PaywallModal({ onClose, onCheckout }: { onClose: () => void; onCheckout: (plan: 'pro_monthly' | 'pro_annual') => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-6 backdrop-blur-md animate-fade-in">
       <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-black/90 backdrop-blur-2xl p-8 shadow-2xl animate-slide-up">
@@ -829,7 +828,7 @@ function PaywallModal({ onClose, onCheckout }: { onClose: () => void; onCheckout
               <span className="text-gray-400 ml-2">/month</span>
             </div>
             <button
-              onClick={() => onCheckout('pro')}
+              onClick={() => onCheckout('pro_monthly')}
               className="w-full rounded-xl glow-button px-4 py-4 font-bold text-white min-h-[56px] transition-all duration-300"
             >
               Choose Pro
@@ -841,21 +840,21 @@ function PaywallModal({ onClose, onCheckout }: { onClose: () => void; onCheckout
               Best value
             </div>
             <div className="mb-3">
-              <h3 className="mb-1 text-2xl font-bold text-white">Lifetime</h3>
-              <p className="text-sm text-gray-400">Lifetime access</p>
+              <h3 className="mb-1 text-2xl font-bold text-white">Annual</h3>
+              <p className="text-sm text-gray-400">Annual access</p>
             </div>
             <div className="mb-2">
               <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$49.99</span>
-              <span className="text-gray-400 ml-2">one-time</span>
+              <span className="text-gray-400 ml-2">/year</span>
             </div>
             <div className="mb-5">
               <span className="text-sm text-gray-500 line-through">Normally $79.99</span>
             </div>
             <button
-              onClick={() => onCheckout('lifetime')}
+              onClick={() => onCheckout('pro_annual')}
               className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-4 py-4 font-bold text-white min-h-[56px] transition-all hover:border-pink-500/50 hover:bg-pink-500/10 hover:shadow-glow-pink"
             >
-              Choose Lifetime
+              Choose Annual
             </button>
           </div>
         </div>
