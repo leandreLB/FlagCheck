@@ -865,7 +865,7 @@ function PaywallModal({ onClose, onCheckout }: { onClose: () => void; onCheckout
 }
 
 function CameraModal({ videoRef, isCameraLoading, onClose, onCapture }: { 
-  videoRef: React.RefObject<HTMLVideoElement | null>; 
+  videoRef: React.RefObject<HTMLVideoElement>; 
   isCameraLoading: boolean; 
   onClose: () => void;
   onCapture: () => void;

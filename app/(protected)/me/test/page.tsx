@@ -279,8 +279,8 @@ export default function SelfTestScreen() {
           <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
         </div>
 
-        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-32 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
-          <div className="flex-1 flex flex-col items-center py-8">
+        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
+          <div className="flex-1 flex flex-col items-center justify-center py-12">
             <button
               onClick={handleBackToMe}
               className="absolute top-8 left-6 rounded-xl p-2 text-gray-400 transition-all hover:bg-white/10 hover:text-white"
@@ -365,8 +365,8 @@ export default function SelfTestScreen() {
           <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
         </div>
 
-        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-32 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
-          <div className="flex-1 flex flex-col items-center py-8">
+        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
+          <div className="flex-1 flex flex-col items-center justify-center py-12">
             <div className="mb-8 text-6xl">🪞</div>
             <h1 className="text-4xl font-bold text-white mb-6 text-center">
               Am I a red flag?
@@ -437,7 +437,7 @@ export default function SelfTestScreen() {
           <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
         </div>
 
-        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-32 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
+        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-4">Your Results</h1>
             <div className="text-6xl mb-4">
@@ -551,7 +551,7 @@ export default function SelfTestScreen() {
         <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
       </div>
 
-      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-32 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
+      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
@@ -567,7 +567,7 @@ export default function SelfTestScreen() {
         </div>
 
         {/* Question */}
-        <div className="flex-1 flex flex-col mb-8">
+        <div className="flex-1 flex flex-col justify-center mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-12 text-center leading-relaxed">
             {question.text}
           </h2>
