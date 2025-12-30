@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   title: "FlagCheck - Dating Profile Scanner",
   description: "Scan dating profiles for red flags",
   manifest: "/manifest.json",
+  themeColor: "#000000",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -30,19 +31,17 @@ export const metadata: Metadata = {
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover",
+  },
   other: {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
   },
-};
-
-export const viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  viewportFit: "cover",
-  themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -54,25 +53,6 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="fr" style={{ backgroundColor: '#000000' }}>
         <head>
-          {/* Critical CSS inline pour éliminer le flash blanc - DOIT être AVANT tout autre CSS */}
-          <style
-            dangerouslySetInnerHTML={{
-              __html: `
-                html, body {
-                  margin: 0;
-                  padding: 0;
-                  background-color: #000000 !important;
-                  width: 100%;
-                  min-height: 100%;
-                }
-                #__next, [data-nextjs-scroll-focus-boundary] {
-                  width: 100%;
-                  min-height: 100vh;
-                  background-color: #000000 !important;
-                }
-              `,
-            }}
-          />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />

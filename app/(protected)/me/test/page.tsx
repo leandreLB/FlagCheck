@@ -3,53 +3,40 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
-import { ChevronLeft, ChevronRight, Loader2, X, Share2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { QUESTIONS, ANSWER_OPTIONS } from '@/lib/constants/questions';
 import { QuestionAnswer } from '@/lib/types/selfTest.types';
-import html2canvas from 'html2canvas';
-import ShareResultImage from '@/components/ShareResultImage';
 
-type QuizState = 'intro' | 'quiz' | 'calculating' | 'results' | 'paywall';
+type QuizState = 'intro' | 'quiz' | 'calculating' | 'results';
 
 export default function SelfTestScreen() {
   const [currentState, setCurrentState] = useState<QuizState>('intro');
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<(QuestionAnswer | 0)[]>(Array(12).fill(0));
+  const [answers, setAnswers] = useState<QuestionAnswer[]>(Array(12).fill(0) as QuestionAnswer[]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState<any>(null);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<'free' | 'pro' | 'lifetime'>('free');
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const { userId } = useAuth();
 
   useEffect(() => {
-    // Vérifier le statut d'abonnement
-    const checkSubscription = async () => {
+    // Vérifier si l'utilisateur peut faire le test
+    const checkCanTake = async () => {
       if (!userId) {
         router.push('/sign-in');
         return;
       }
 
-      try {
-        setIsLoading(true);
-        const response = await fetch('/api/subscription/check');
-        if (response.ok) {
-          const data = await response.json();
-          setSubscriptionStatus(data.status);
-          
-          // Si l'utilisateur n'est pas premium, afficher le paywall
-          if (data.status === 'free') {
-            setCurrentState('paywall');
-          }
+      const response = await fetch('/api/self-tests/can-take');
+      if (response.ok) {
+        const data = await response.json();
+        if (!data.canTake) {
+          // Rediriger vers le paywall
+          router.push('/me?upgrade=true');
         }
-      } catch (error) {
-        console.error('Error checking subscription:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
-    checkSubscription();
+    checkCanTake();
   }, [userId, router]);
 
   const handleAnswer = (value: QuestionAnswer) => {
@@ -74,7 +61,7 @@ export default function SelfTestScreen() {
 
   const handleSubmit = async () => {
     // Vérifier que toutes les questions sont répondues
-    if (answers.some((answer): answer is 0 => answer === 0)) {
+    if (answers.some(answer => answer === 0)) {
       alert('Please answer all questions before submitting');
       return;
     }
@@ -86,20 +73,15 @@ export default function SelfTestScreen() {
       const response = await fetch('/api/self-tests/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: answers as QuestionAnswer[] }),
+        body: JSON.stringify({ answers }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('API Error:', errorData);
-        const errorMessage = errorData.details 
-          ? `${errorData.error}: ${errorData.details}` 
-          : errorData.error || 'Failed to submit test';
-        throw new Error(errorMessage);
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to submit test');
       }
 
       const data = await response.json();
-      console.log('Test created successfully:', data);
       setResults(data);
       
       // Attendre un peu pour l'animation de calcul
@@ -108,9 +90,7 @@ export default function SelfTestScreen() {
       }, 2000);
     } catch (error) {
       console.error('Error submitting test:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-      console.error('Full error:', errorMessage);
-      alert(errorMessage);
+      alert(error instanceof Error ? error.message : 'An error occurred');
       setCurrentState('quiz');
     } finally {
       setIsSubmitting(false);
@@ -125,237 +105,6 @@ export default function SelfTestScreen() {
   const handleBackToMe = () => {
     router.push('/me');
   };
-
-  const handleShareResults = async () => {
-    try {
-      // Créer un élément div pour contenir le composant d'image
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.width = '1080px';
-      tempContainer.style.height = '1920px';
-      document.body.appendChild(tempContainer);
-
-      // Créer un conteneur React pour le composant
-      const imageDiv = document.createElement('div');
-      imageDiv.id = 'share-image-container';
-      tempContainer.appendChild(imageDiv);
-
-      // Utiliser ReactDOM pour rendre le composant
-      const React = await import('react');
-      const ReactDOM = await import('react-dom/client');
-      const root = ReactDOM.createRoot(imageDiv);
-      
-      root.render(
-        React.createElement(ShareResultImage, {
-          totalScore: results.scores.total,
-          categoryScores: {
-            communication: results.scores.communication,
-            boundaries: results.scores.boundaries,
-            attachment: results.scores.attachment,
-            honesty: results.scores.honesty,
-            toxic: results.scores.toxic,
-          },
-        })
-      );
-
-      // Attendre que le composant soit rendu et que le QR code soit généré
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Capturer l'image avec html2canvas
-      const canvas = await html2canvas(imageDiv.firstChild as HTMLElement, {
-        width: 1080,
-        height: 1920,
-        scale: 1,
-        useCORS: true,
-        backgroundColor: null,
-        logging: false,
-      });
-
-      // Convertir en blob
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          alert('Failed to generate image');
-          document.body.removeChild(tempContainer);
-          return;
-        }
-
-        // Nettoyer le conteneur temporaire
-        root.unmount();
-        document.body.removeChild(tempContainer);
-
-        // Vérifier si Web Share API est disponible
-        const file = new File([blob], 'flagcheck-result.png', { type: 'image/png' });
-        
-        if (navigator.share) {
-          try {
-            await navigator.share({
-              title: 'My FlagCheck Results',
-              text: `I scored ${results.scores.total.toFixed(1)}/10 on FlagCheck! Test yourself at flagcheck.app 🚩`,
-              files: [file],
-            });
-            alert('Thanks for sharing! 🎉');
-          } catch (error) {
-            if ((error as Error).name !== 'AbortError') {
-              // Si l'utilisateur annule, ne rien faire
-              // Sinon, télécharger l'image
-              downloadImage(blob);
-            }
-          }
-        } else {
-          // Fallback: télécharger l'image
-          downloadImage(blob);
-        }
-      }, 'image/png');
-    } catch (error) {
-      console.error('Error sharing results:', error);
-      alert('Failed to share results. Please try again.');
-    }
-  };
-
-  const downloadImage = (blob: Blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `flagcheck-result-${results.scores.total.toFixed(1)}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleCheckout = async (plan: 'pro' | 'lifetime') => {
-    if (!userId) {
-      const currentUrl = window.location.pathname;
-      router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`);
-      return;
-    }
-
-    try {
-      const priceType = plan === 'pro' ? 'monthly' : 'lifetime';
-      const response = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceType }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('API Error:', errorData);
-        throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('Payment URL not received');
-      }
-    } catch (err) {
-      console.error('Checkout error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Payment failed. Please try again.';
-      alert(errorMessage);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 inline-block rounded-full bg-gradient-primary p-4 shadow-glow-md animate-pulse">
-            <Loader2 className="h-8 w-8 text-white animate-spin" />
-          </div>
-          <p className="text-gray-400">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Écran de paywall
-  if (currentState === 'paywall') {
-    return (
-      <div className="relative flex flex-col overflow-x-hidden overflow-y-visible w-full min-h-screen">
-        <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
-        </div>
-
-        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
-          <div className="flex-1 flex flex-col items-center justify-center py-12">
-            <button
-              onClick={handleBackToMe}
-              className="absolute top-8 left-6 rounded-xl p-2 text-gray-400 transition-all hover:bg-white/10 hover:text-white"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            <div className="mb-8 text-center">
-              <div className="mb-4 text-6xl">🪞</div>
-              <h1 className="text-4xl font-bold text-white mb-4">
-                Premium Feature
-              </h1>
-              <p className="text-lg text-gray-400 max-w-md">
-                The "Am I a red flag?" test is available exclusively for Pro and Lifetime members.
-              </p>
-            </div>
-
-            <div className="w-full max-w-md space-y-4 mt-8">
-              {/* Pro Plan */}
-              <div className="relative rounded-3xl border-2 border-indigo-500/50 bg-gradient-to-br from-indigo-600/20 to-indigo-600/10 backdrop-blur-xl p-6 shadow-glow-md hover:border-indigo-500 transition-all duration-300">
-                <div className="absolute right-4 top-4 rounded-full bg-gradient-primary px-3 py-1 text-xs font-bold text-white shadow-glow-sm">
-                  Recommended
-                </div>
-                <div className="mb-3">
-                  <h3 className="mb-1 text-2xl font-bold text-white">Pro</h3>
-                  <p className="text-sm text-gray-400">Unlimited scans & self-tests</p>
-                </div>
-                <div className="mb-5">
-                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$6.99</span>
-                  <span className="text-gray-400 ml-2">/month</span>
-                </div>
-                <button
-                  onClick={() => handleCheckout('pro')}
-                  className="w-full rounded-xl glow-button px-4 py-4 font-bold text-white min-h-[56px] transition-all duration-300"
-                >
-                  Choose Pro
-                </button>
-              </div>
-
-              {/* Lifetime Plan */}
-              <div className="relative rounded-3xl border border-white/10 bg-black/50 backdrop-blur-xl p-6 glass-card">
-                <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-pink-500/80 to-purple-500/80 px-3 py-1 text-xs font-bold text-white shadow-glow-sm">
-                  Best value
-                </div>
-                <div className="mb-3">
-                  <h3 className="mb-1 text-2xl font-bold text-white">Lifetime</h3>
-                  <p className="text-sm text-gray-400">Lifetime access</p>
-                </div>
-                <div className="mb-2">
-                  <span className="text-5xl font-bold text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">$49.99</span>
-                  <span className="text-gray-400 ml-2">one-time</span>
-                </div>
-                <div className="mb-5">
-                  <span className="text-sm text-gray-500 line-through">Normally $79.99</span>
-                </div>
-                <button
-                  onClick={() => handleCheckout('lifetime')}
-                  className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-4 py-4 font-bold text-white min-h-[56px] transition-all hover:border-pink-500/50 hover:bg-pink-500/10 hover:shadow-glow-pink"
-                >
-                  Choose Lifetime
-                </button>
-              </div>
-            </div>
-
-            <button
-              onClick={handleBackToMe}
-              className="mt-8 text-gray-400 hover:text-white transition-colors"
-            >
-              Back to Me
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Écran d'introduction
   if (currentState === 'intro') {
@@ -477,62 +226,9 @@ export default function SelfTestScreen() {
             </div>
           </div>
 
-          {/* Share Results Section */}
-          <div className="mb-8 rounded-2xl border border-white/10 bg-black/50 backdrop-blur-xl p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Share your results</h2>
-            
-            {/* Preview miniature de l'image */}
-            <div className="mb-6 flex justify-center">
-              <div
-                className="relative"
-                style={{
-                  width: '200px',
-                  height: '356px', // Ratio 1080/1920
-                  background: 'linear-gradient(to bottom, #000000 0%, #4c1d95 50%, #7c3aed 100%)',
-                  borderRadius: '16px',
-                  overflow: 'hidden',
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
-                }}
-              >
-                <div className="absolute inset-0 flex flex-col items-center justify-between p-4">
-                  {/* Logo mini */}
-                  <div className="text-white text-xs font-bold mt-2">FlagCheck</div>
-                  
-                  {/* Score mini */}
-                  <div className="flex flex-col items-center">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-black text-white">
-                        {results.scores.total.toFixed(1)}
-                      </span>
-                      <span className="text-xl text-gray-400">/10</span>
-                      <span className="text-3xl">🚩</span>
-                    </div>
-                    <div className="text-white text-xs font-bold mt-2">
-                      Am I a red flag?
-                    </div>
-                  </div>
-                  
-                  {/* Watermark mini */}
-                  <div className="text-gray-400 text-[8px] text-center">
-                    Test yourself on FlagCheck
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Bouton de partage */}
-            <button
-              onClick={handleShareResults}
-              className="w-full rounded-xl glow-button px-8 py-4 font-bold text-white text-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3"
-            >
-              <Share2 className="h-5 w-5" />
-              Share to Story
-            </button>
-          </div>
-
           <button
             onClick={handleBackToMe}
-            className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-8 py-4 font-bold text-white text-lg transition-all duration-300 hover:border-pink-500/50 hover:bg-pink-500/10"
+            className="w-full rounded-xl glow-button px-8 py-4 font-bold text-white text-lg transition-all duration-300 hover:scale-105"
           >
             View Full Results
           </button>

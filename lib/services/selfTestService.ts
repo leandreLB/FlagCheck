@@ -107,22 +107,26 @@ export async function saveSelfTest(
   const testId = crypto.randomUUID();
   const date = new Date().toISOString();
 
+  const testData = {
+    testId,
+    date,
+    scores: {
+      communication: scores.communication,
+      boundaries: scores.boundaries,
+      attachment: scores.attachment,
+      honesty: scores.honesty,
+      toxic: scores.toxic,
+      total: scores.total,
+    },
+    answers,
+    completed: true,
+  };
+
   const { data, error } = await supabase
     .from('self_tests')
     .insert({
       user_id: userId,
-      testid: testId, // Utiliser testid (minuscules) pour correspondre à la colonne PostgreSQL
-      date,
-      scores: {
-        communication: scores.communication,
-        boundaries: scores.boundaries,
-        attachment: scores.attachment,
-        honesty: scores.honesty,
-        toxic: scores.toxic,
-        total: scores.total,
-      },
-      answers,
-      completed: true,
+      ...testData,
     })
     .select()
     .single();
@@ -133,7 +137,7 @@ export async function saveSelfTest(
   }
 
   return {
-    testId: data.testid || data.testId, // Support les deux formats pour compatibilité
+    testId: data.testId,
     date: data.date,
     scores: data.scores as SelfTestScores,
     answers: data.answers as QuestionAnswer[],
@@ -162,7 +166,7 @@ export async function getSelfTests(
   }
 
   return (data || []).map((test) => ({
-    testId: test.testid || test.testId, // Support les deux formats pour compatibilité
+    testId: test.testId,
     date: test.date,
     scores: test.scores as SelfTestScores,
     answers: test.answers as QuestionAnswer[],
@@ -199,7 +203,7 @@ export async function getLatestScore(
   }
 
   return {
-    testId: data.testid || data.testId, // Support les deux formats pour compatibilité
+    testId: data.testId,
     date: data.date,
     scores: data.scores as SelfTestScores,
     answers: data.answers as QuestionAnswer[],
@@ -226,7 +230,7 @@ export async function canTakeTest(
 
   const { data, error } = await supabase
     .from('self_tests')
-    .select('testid') // Utiliser testid (minuscules) pour correspondre à la colonne PostgreSQL
+    .select('testId')
     .eq('user_id', userId)
     .eq('completed', true)
     .gte('date', startOfMonthISO)
