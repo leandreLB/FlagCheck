@@ -14,7 +14,7 @@ type QuizState = 'intro' | 'quiz' | 'calculating' | 'results' | 'paywall';
 export default function SelfTestScreen() {
   const [currentState, setCurrentState] = useState<QuizState>('intro');
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<QuestionAnswer[]>(Array(12).fill(0) as QuestionAnswer[]);
+  const [answers, setAnswers] = useState<(QuestionAnswer | 0)[]>(Array(12).fill(0));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<'free' | 'pro' | 'lifetime'>('free');
@@ -74,7 +74,7 @@ export default function SelfTestScreen() {
 
   const handleSubmit = async () => {
     // Vérifier que toutes les questions sont répondues
-    if (answers.some(answer => answer === 0)) {
+    if (answers.some((answer): answer is 0 => answer === 0)) {
       alert('Please answer all questions before submitting');
       return;
     }
@@ -86,7 +86,7 @@ export default function SelfTestScreen() {
       const response = await fetch('/api/self-tests/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers }),
+        body: JSON.stringify({ answers: answers as QuestionAnswer[] }),
       });
 
       if (!response.ok) {

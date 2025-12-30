@@ -128,9 +128,9 @@ export async function POST(request: Request) {
       
       if (subscriptionId) {
         try {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-          if (subscription.current_period_end) {
-            nextBillingDate = new Date(subscription.current_period_end * 1000).toISOString();
+          const subscriptionData = await stripe.subscriptions.retrieve(subscriptionId);
+          if (subscriptionData && 'current_period_end' in subscriptionData && subscriptionData.current_period_end) {
+            nextBillingDate = new Date((subscriptionData.current_period_end as number) * 1000).toISOString();
           }
         } catch (err) {
           console.error("Error retrieving subscription for billing date:", err);
@@ -239,8 +239,8 @@ export async function POST(request: Request) {
         // Abonnement actif, s'assurer que le plan est correct
         console.log("✅ Subscription is active, ensuring Pro plan");
         
-        const nextBillingDate = subscription.current_period_end
-          ? new Date(subscription.current_period_end * 1000).toISOString()
+        const nextBillingDate = subscription && 'current_period_end' in subscription && subscription.current_period_end
+          ? new Date((subscription.current_period_end as number) * 1000).toISOString()
           : undefined;
 
         const { error: updateError } = await supabase
