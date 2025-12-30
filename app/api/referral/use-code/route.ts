@@ -68,6 +68,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to apply referral code' }, { status: 500 });
     }
 
+    // Donner 3 jours de premium gratuit à l'utilisateur qui entre le code
+    const now = new Date();
+    const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+    // Vérifier si l'utilisateur a déjà du Pro gratuit
+    const { data: userData } = await supabase
+      .from('users')
+      .select('free_pro_until')
+      .eq('user_id', userId)
+      .single();
+
+    const currentFreeProUntil = userData?.free_pro_until
+      ? new Date(userData.free_pro_until)
+      : null;
+
+    // Si la date actuelle est dans le futur, prolonger à partir de cette date
+    // Sinon, commencer à partir de maintenant
+    const newFreeProUntil =
+      currentFreeProUntil && currentFreeProUntil > now
+        ? new Date(currentFreeProUntil.getTime() + 3 * 24 * 60 * 60 * 1000)
+        : threeDaysLater;
+
+    // Mettre à jour free_pro_until pour l'utilisateur qui entre le code
+    const { error: updateUserProError } = await supabase
+      .from('users')
+      .update({
+        free_pro_until: newFreeProUntil.toISOString(),
+      })
+      .eq('user_id', userId);
+
+    if (updateUserProError) {
+      console.error('Error updating free_pro_until for user:', updateUserProError);
+      // Ne pas faire échouer la requête si cette mise à jour échoue
+    }
+
     // Compter les parrainés du parrain
     const { data: referredUsers, error: countError } = await supabase
       .from('users')

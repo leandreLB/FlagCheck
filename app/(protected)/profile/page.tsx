@@ -548,20 +548,56 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Referral Stats */}
-              <div className="mb-4 rounded-xl border border-white/5 bg-black/30 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-400">Friends referred</span>
-                  <span className="text-2xl font-bold text-white">{referralStats.referralCount}</span>
+              {/* Referral Stats - Styled Progress Bar */}
+              <div className="mb-4 rounded-xl border border-white/10 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1)]">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-lg bg-gradient-to-br from-pink-500/30 to-purple-500/30 p-1.5 border border-pink-500/40">
+                      <TrendingUp className="h-4 w-4 text-pink-400" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Friends referred</span>
+                  </div>
+                  <div className="relative">
+                    <span className="text-3xl font-black bg-gradient-primary bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">
+                      {referralStats.referralCount}
+                    </span>
+                  </div>
                 </div>
-                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-primary transition-all duration-300"
-                    style={{ width: `${(referralStats.referralCount % 3) * 33.33}%` }}
-                  />
+                
+                {/* Progress Bar Container */}
+                <div className="relative mb-3">
+                  <div className="w-full h-4 bg-black/50 rounded-full overflow-hidden border border-white/10 shadow-inner">
+                    <div
+                      className="relative h-full bg-gradient-primary transition-all duration-500 ease-out rounded-full shadow-[0_0_15px_rgba(236,72,153,0.6)]"
+                      style={{ width: `${Math.min(100, (referralStats.referralCount % 3) * 33.33)}%` }}
+                    >
+                      {/* Shine effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                    </div>
+                  </div>
+                  {/* Progress indicators */}
+                  <div className="absolute inset-0 flex items-center justify-between px-1 pointer-events-none">
+                    {[0, 1, 2].map((index) => (
+                      <div
+                        key={index}
+                        className={`w-2 h-2 rounded-full ${
+                          referralStats.referralCount % 3 > index
+                            ? 'bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.8)]'
+                            : 'bg-white/20'
+                        } transition-all duration-300`}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  {referralStats.remainingForReward} more friend{referralStats.remainingForReward !== 1 ? 's' : ''} to get 1 week of Pro free!
+                
+                <p className="text-xs text-gray-400 text-center font-medium">
+                  {referralStats.remainingForReward > 0 ? (
+                    <>
+                      <span className="text-pink-400 font-bold">{referralStats.remainingForReward}</span> more friend{referralStats.remainingForReward !== 1 ? 's' : ''} to get <span className="text-pink-400 font-bold">1 week of Pro free</span>! 🎁
+                    </>
+                  ) : (
+                    <span className="text-green-400 font-bold">You've earned 1 week of Pro free! 🎉</span>
+                  )}
                 </p>
               </div>
 
