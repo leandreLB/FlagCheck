@@ -42,7 +42,7 @@ export const viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#000000",
+  themeColor: "#8B5CF6",
 };
 
 export default function RootLayout({
@@ -52,23 +52,95 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="fr" style={{ backgroundColor: '#000000' }}>
+      <html lang="fr" style={{ backgroundColor: '#0F0F0F' }}>
         <head>
-          {/* Critical CSS inline pour éliminer le flash blanc - DOIT être AVANT tout autre CSS */}
+          {/* CRITICAL: Inline CSS to prevent white flash - MUST be BEFORE any other CSS */}
           <style
             dangerouslySetInnerHTML={{
               __html: `
-                html, body {
+                html {
+                  background-color: #0F0F0F;
+                }
+                
+                body {
                   margin: 0;
                   padding: 0;
-                  background-color: #000000 !important;
+                  background-color: #0F0F0F;
                   width: 100%;
                   min-height: 100%;
+                  -webkit-tap-highlight-color: transparent;
                 }
+                
                 #__next, [data-nextjs-scroll-focus-boundary] {
                   width: 100%;
                   min-height: 100vh;
-                  background-color: #000000 !important;
+                  background-color: #0F0F0F;
+                }
+                
+                /* Splash Screen */
+                #splash-screen {
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  width: 100%;
+                  height: 100%;
+                  background: linear-gradient(180deg, #0F0F0F 0%, #1a0a2e 100%);
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  z-index: 9999;
+                  transition: opacity 0.5s ease-out;
+                }
+                
+                #splash-screen.fade-out {
+                  opacity: 0;
+                  pointer-events: none;
+                }
+                
+                .splash-content {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  gap: 24px;
+                }
+                
+                .splash-logo {
+                  width: 100px;
+                  height: 100px;
+                  animation: pulse 2s ease-in-out infinite;
+                }
+                
+                @keyframes pulse {
+                  0%, 100% { 
+                    transform: scale(1); 
+                    opacity: 1; 
+                  }
+                  50% { 
+                    transform: scale(1.05); 
+                    opacity: 0.8; 
+                  }
+                }
+                
+                .splash-title {
+                  font-size: 28px;
+                  font-weight: 700;
+                  color: #ffffff;
+                  margin: 0;
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  letter-spacing: 0.5px;
+                }
+                
+                .splash-loader {
+                  width: 40px;
+                  height: 40px;
+                  border: 3px solid rgba(139, 92, 246, 0.2);
+                  border-top-color: #8B5CF6;
+                  border-radius: 50%;
+                  animation: spin 1s linear infinite;
+                }
+                
+                @keyframes spin {
+                  to { transform: rotate(360deg); }
                 }
               `,
             }}
@@ -76,7 +148,13 @@ export default function RootLayout({
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover" />
-          <meta name="theme-color" content="#000000" />
+          <meta name="theme-color" content="#8B5CF6" />
+          <meta name="msapplication-TileColor" content="#8B5CF6" />
+          
+          {/* iOS Icons */}
+          <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+          <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png" />
+          <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
           <script
             dangerouslySetInnerHTML={{
               __html: `
@@ -117,7 +195,14 @@ export default function RootLayout({
           
           <link rel="stylesheet" href="/critical.css" />
         </head>
-        <body className={`${inter.variable} antialiased`} style={{ backgroundColor: '#000000', margin: 0, padding: 0 }}>
+        <body className={`${inter.variable} antialiased`} style={{ backgroundColor: '#0F0F0F', margin: 0, padding: 0 }}>
+          {/* SPLASH SCREEN - Must be BEFORE root content */}
+          <div id="splash-screen">
+            <div className="splash-content">
+              <h1 className="splash-title">FlagCheck</h1>
+              <div className="splash-loader"></div>
+            </div>
+          </div>
           <SplashScreen />
           {children}
         </body>
