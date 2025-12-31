@@ -53,14 +53,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Récupérer l'abonnement actuel
+    // Récupérer l'abonnement actuel pour obtenir la date de fin de période
     const subscription = await stripe.subscriptions.retrieve(user.subscription_id);
 
     // Annuler l'abonnement à la fin de la période de facturation (meilleure pratique)
     // Cela permet à l'utilisateur de continuer à utiliser le service jusqu'à la fin de la période payée
-    const updatedSubscription = await stripe.subscriptions.update(user.subscription_id, {
+    await stripe.subscriptions.update(user.subscription_id, {
       cancel_at_period_end: true,
     });
+
+    // Récupérer l'abonnement mis à jour pour obtenir les informations finales
+    const updatedSubscription = await stripe.subscriptions.retrieve(user.subscription_id);
 
     // Note: Le statut reste "pro" jusqu'à la fin de la période
     // Le webhook customer.subscription.deleted mettra à jour le statut quand l'abonnement sera réellement annulé
