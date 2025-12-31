@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     // Récupérer l'utilisateur et son subscription_id depuis Supabase
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("subscription_id, subscription_status")
+      .select("subscription_id, subscription_plan")
       .eq("user_id", userId)
       .single();
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     }
 
     // Vérifier que l'utilisateur a un abonnement Pro actif
-    if (user.subscription_status !== "pro") {
+    if (user.subscription_plan !== "pro_monthly" && user.subscription_plan !== "pro_annual") {
       return NextResponse.json(
         { error: "No active Pro subscription to cancel" },
         { status: 400 }
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
     if (!user.subscription_id) {
       return NextResponse.json(
-        { error: "Subscription ID not found" },
+        { error: "Subscription ID not found. Please contact support if you believe this is an error." },
         { status: 400 }
       );
     }
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     const { error: updateError } = await supabase
       .from("users")
       .update({
-        subscription_status: "free",
+        subscription_plan: "free",
         subscription_id: null,
       })
       .eq("user_id", userId);
