@@ -32,3 +32,4 @@ Vous devriez voir un tableau avec toutes les colonnes, y compris `testid`.
 
 Une fois le script exécuté, la colonne `testid` sera présente et le quiz devrait fonctionner correctement.
 
+

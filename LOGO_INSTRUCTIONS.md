@@ -27,3 +27,4 @@ Vérifiez que ces fichiers existent :
 
 Le code est déjà configuré pour utiliser `/icons/icon-192.png` dans la splash screen !
 
+

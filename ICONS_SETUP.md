@@ -25,3 +25,4 @@ Ensuite, vérifiez que les fichiers sont accessibles :
 - http://localhost:3000/icons/icon-512.png
 - http://localhost:3000/icons/icon-180.png
 
+

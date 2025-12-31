@@ -93,3 +93,4 @@ INSERT INTO self_tests (
 
 Si ça fonctionne, le problème vient peut-être du format des données envoyées depuis le code.
 
+

@@ -37,3 +37,4 @@ Si la colonne s'appelle `testid` (minuscules), c'est parfait ! Le code devrait f
 
 Une fois la table créée, le quiz "Am I a red flag?" devrait fonctionner correctement dans l'application.
 
+

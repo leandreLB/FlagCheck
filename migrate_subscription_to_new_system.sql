@@ -68,3 +68,4 @@ GROUP BY subscription_plan;
 --   free_scans_remaining = 3
 -- WHERE user_id = 'user_clerk_id_ici';
 
+

@@ -58,3 +58,4 @@ FROM information_schema.columns
 WHERE table_name = 'self_tests'
 ORDER BY ordinal_position;
 
+

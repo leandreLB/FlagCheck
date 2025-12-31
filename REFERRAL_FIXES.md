@@ -58,3 +58,4 @@ Le fichier `add_referral_columns.sql` a été mis à jour pour :
 - Chaque code est garanti unique grâce à l'index unique dans la base de données
 - En cas de race condition rare (deux utilisateurs génèrent le même code simultanément), le système génère automatiquement un nouveau code
 
+
