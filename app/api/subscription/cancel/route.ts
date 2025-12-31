@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import Stripe from "stripe";
 import { supabase } from "@/lib/supabase";
 
@@ -46,15 +46,75 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!user.subscription_id) {
-      return NextResponse.json(
-        { error: "Subscription ID not found. Please contact support if you believe this is an error." },
-        { status: 400 }
-      );
+    let subscriptionId = user.subscription_id;
+
+    // Si le subscription_id n'est pas dans la base de données, essayer de le récupérer depuis Stripe
+    if (!subscriptionId) {
+      console.log("⚠️ Subscription ID not found in database, trying to find it in Stripe...");
+      
+      // Récupérer l'email de l'utilisateur depuis Clerk
+      const clerkUser = await currentUser();
+      const userEmail = clerkUser?.emailAddresses?.[0]?.emailAddress;
+
+      if (!userEmail) {
+        return NextResponse.json(
+          { error: "Unable to find your subscription. Please contact support with your email address." },
+          { status: 400 }
+        );
+      }
+
+      try {
+        // Chercher le customer Stripe par email
+        const customers = await stripe.customers.list({
+          email: userEmail,
+          limit: 1,
+        });
+
+        if (customers.data.length === 0) {
+          return NextResponse.json(
+            { error: "No Stripe customer found for your email. Please contact support." },
+            { status: 400 }
+          );
+        }
+
+        const customer = customers.data[0];
+
+        // Chercher les abonnements actifs de ce customer
+        const subscriptions = await stripe.subscriptions.list({
+          customer: customer.id,
+          status: "active",
+          limit: 10,
+        });
+
+        if (subscriptions.data.length === 0) {
+          return NextResponse.json(
+            { error: "No active subscription found in Stripe. Your account may already be cancelled." },
+            { status: 400 }
+          );
+        }
+
+        // Prendre le premier abonnement actif (normalement il n'y en a qu'un)
+        subscriptionId = subscriptions.data[0].id;
+        
+        console.log("✅ Found subscription in Stripe:", subscriptionId);
+        
+        // Mettre à jour la base de données avec le subscription_id trouvé
+        await supabase
+          .from("users")
+          .update({ subscription_id: subscriptionId })
+          .eq("user_id", userId);
+
+      } catch (stripeError) {
+        console.error("Error finding subscription in Stripe:", stripeError);
+        return NextResponse.json(
+          { error: "Unable to find your subscription in Stripe. Please contact support." },
+          { status: 500 }
+        );
+      }
     }
 
     // Annuler l'abonnement Stripe
-    const subscription = await stripe.subscriptions.cancel(user.subscription_id);
+    const subscription = await stripe.subscriptions.cancel(subscriptionId);
 
     // Mettre à jour le statut dans Supabase
     // Note: Le webhook customer.subscription.deleted mettra aussi à jour le statut,
