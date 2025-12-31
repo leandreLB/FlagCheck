@@ -53,41 +53,32 @@ export async function POST(request: Request) {
       );
     }
 
-    // Récupérer l'abonnement actuel pour obtenir la date de fin de période
-    const subscription = await stripe.subscriptions.retrieve(user.subscription_id);
+    // Annuler l'abonnement Stripe
+    const subscription = await stripe.subscriptions.cancel(user.subscription_id);
 
-    // Annuler l'abonnement à la fin de la période de facturation (meilleure pratique)
-    // Cela permet à l'utilisateur de continuer à utiliser le service jusqu'à la fin de la période payée
-    await stripe.subscriptions.update(user.subscription_id, {
-      cancel_at_period_end: true,
-    });
+    // Mettre à jour le statut dans Supabase
+    // Note: Le webhook customer.subscription.deleted mettra aussi à jour le statut,
+    // mais on le fait ici pour une réponse immédiate
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({
+        subscription_status: "free",
+        subscription_id: null,
+      })
+      .eq("user_id", userId);
 
-    // Récupérer l'abonnement mis à jour pour obtenir les informations finales
-    const updatedSubscription = await stripe.subscriptions.retrieve(user.subscription_id);
-
-    // Note: Le statut reste "pro" jusqu'à la fin de la période
-    // Le webhook customer.subscription.deleted mettra à jour le statut quand l'abonnement sera réellement annulé
-    // On pourrait mettre à jour une colonne subscription_cancelled_at_period_end si elle existe,
-    // mais pour l'instant on laisse le webhook gérer la transition finale
-
-    // Calculer la date de fin de période
-    const periodEnd = new Date(updatedSubscription.current_period_end * 1000);
-    const periodEndFormatted = periodEnd.toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
+    if (updateError) {
+      console.error("Error updating user status:", updateError);
+      // Ne pas retourner d'erreur car l'abonnement Stripe est déjà annulé
+    }
 
     return NextResponse.json(
       { 
         success: true,
-        message: "Subscription will be cancelled at the end of your billing period",
+        message: "Subscription cancelled successfully",
         subscription: {
-          id: updatedSubscription.id,
-          status: updatedSubscription.status,
-          cancel_at_period_end: updatedSubscription.cancel_at_period_end,
-          current_period_end: updatedSubscription.current_period_end,
-          period_end_formatted: periodEndFormatted,
+          id: subscription.id,
+          status: subscription.status,
         }
       },
       { status: 200 }

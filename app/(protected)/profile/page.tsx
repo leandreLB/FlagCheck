@@ -153,9 +153,7 @@ export default function ProfilePage() {
   };
 
   const handleCancelSubscription = async () => {
-    const confirmMessage = 'Are you sure you want to cancel your Pro subscription? You will lose access to unlimited scans at the end of your billing period, but you can continue using Pro features until then.';
-    
-    if (!confirm(confirmMessage)) {
+    if (!confirm('Are you sure you want to cancel your Pro subscription? You will lose access to unlimited scans at the end of your billing period.')) {
       return;
     }
 
@@ -171,16 +169,14 @@ export default function ProfilePage() {
       }
 
       const data = await response.json();
-      const periodEnd = data.subscription?.period_end_formatted || 'the end of your billing period';
-      
-      alert(`✅ Subscription cancellation scheduled successfully!\n\nYour Pro access will continue until ${periodEnd}. After that date, your subscription will be cancelled and you'll be switched to the free plan.`);
+      alert('Subscription cancelled successfully. Your access will continue until the end of your billing period.');
       
       // Refresh subscription status
       await fetchData();
     } catch (err) {
       console.error('Cancel subscription error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to cancel subscription. Please try again.';
-      alert(`❌ Error: ${errorMessage}`);
+      alert(errorMessage);
     }
   };
 
