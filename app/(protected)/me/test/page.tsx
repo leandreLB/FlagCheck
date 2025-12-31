@@ -179,11 +179,15 @@ export default function SelfTestScreen() {
           <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
         </div>
 
-        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
+        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ 
+          paddingTop: 'max(2rem, calc(env(safe-area-inset-top, 0px) + 2rem))',
+          paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' 
+        }}>
           <div className="flex-1 flex flex-col items-center py-8">
             <button
               onClick={handleBackToMe}
               className="absolute top-8 left-6 rounded-xl p-2 text-gray-400 transition-all hover:bg-white/10 hover:text-white"
+              style={{ top: 'max(2rem, calc(env(safe-area-inset-top, 0px) + 2rem))' }}
             >
               <X className="h-5 w-5" />
             </button>
@@ -214,7 +218,7 @@ export default function SelfTestScreen() {
                 </div>
                 <button
                   onClick={() => handleCheckout('pro_monthly')}
-                  className="w-full rounded-xl glow-button px-4 py-4 font-bold text-white min-h-[56px] transition-all duration-300"
+                  className="w-full rounded-xl glow-button px-4 py-4 font-bold text-white min-h-[56px] transition-all duration-300 md:hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] md:hover:scale-[1.02]"
                 >
                   Choose Pro
                 </button>
@@ -239,7 +243,7 @@ export default function SelfTestScreen() {
                 </div>
                 <button
                   onClick={() => handleCheckout('pro_annual')}
-                  className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-4 py-4 font-bold text-white min-h-[56px] transition-all hover:border-pink-500/50 hover:bg-pink-500/10 hover:shadow-glow-pink"
+                  className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-4 py-4 font-bold text-white min-h-[56px] transition-all hover:border-pink-500/50 hover:bg-pink-500/10 hover:shadow-glow-pink md:hover:scale-[1.02] md:hover:shadow-[0_0_25px_rgba(236,72,153,0.4)]"
                 >
                   Choose Annual
                 </button>
@@ -266,10 +270,13 @@ export default function SelfTestScreen() {
           <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
         </div>
 
-        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
+        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ 
+          paddingTop: 'max(2rem, calc(env(safe-area-inset-top, 0px) + 2rem))',
+          paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' 
+        }}>
           <div className="flex-1 flex flex-col items-center py-8">
             <div className="mb-8 text-6xl">🪞</div>
-            <h1 className="text-4xl font-bold text-white mb-6 text-center">
+            <h1 className="text-4xl font-bold text-white mb-6 text-center w-full">
               Am I a red flag?
             </h1>
 
@@ -301,7 +308,7 @@ export default function SelfTestScreen() {
 
             <button
               onClick={handleStartQuiz}
-              className="w-full max-w-md rounded-xl glow-button px-8 py-4 font-bold text-white text-lg transition-all duration-300 hover:scale-105"
+              className="w-full max-w-md md:min-w-[250px] rounded-xl glow-button px-8 py-4 font-bold text-white text-lg transition-all duration-300 hover:scale-105 md:hover:shadow-[0_0_30px_rgba(99,102,241,0.6)]"
             >
               Start Quiz
             </button>
@@ -338,7 +345,10 @@ export default function SelfTestScreen() {
           <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
         </div>
 
-        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
+        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ 
+          paddingTop: 'max(2rem, calc(env(safe-area-inset-top, 0px) + 2rem))',
+          paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' 
+        }}>
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-4">Your Results</h1>
             <div className="text-6xl mb-4">
@@ -380,7 +390,7 @@ export default function SelfTestScreen() {
 
           <button
             onClick={handleBackToMe}
-            className="w-full rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-8 py-4 font-bold text-white text-lg transition-all duration-300 hover:border-pink-500/50 hover:bg-pink-500/10"
+            className="w-full md:w-auto md:min-w-[250px] rounded-xl border border-white/20 bg-black/50 backdrop-blur-xl px-8 py-4 font-bold text-white text-lg transition-all duration-300 hover:border-pink-500/50 hover:bg-pink-500/10 md:hover:scale-[1.02] md:hover:shadow-[0_0_20px_rgba(236,72,153,0.3)]"
           >
             View Full Results
           </button>
@@ -399,7 +409,10 @@ export default function SelfTestScreen() {
         <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
       </div>
 
-      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
+      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ 
+        paddingTop: 'max(2rem, calc(env(safe-area-inset-top, 0px) + 2rem))',
+        paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' 
+      }}>
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
@@ -453,7 +466,7 @@ export default function SelfTestScreen() {
             className={`flex-1 rounded-xl border-2 p-4 font-bold text-white transition-all duration-300 ${
               currentQuestion === 0
                 ? 'border-white/10 bg-black/30 opacity-50 cursor-not-allowed'
-                : 'border-white/30 bg-black/50 backdrop-blur-xl hover:border-white/50 hover:bg-white/5'
+                : 'border-white/30 bg-black/50 backdrop-blur-xl hover:border-white/50 hover:bg-white/5 md:hover:scale-[1.02] md:hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]'
             }`}
           >
             <div className="flex items-center justify-center gap-2">
@@ -467,7 +480,7 @@ export default function SelfTestScreen() {
             className={`flex-1 rounded-xl p-4 font-bold text-white transition-all duration-300 ${
               answers[currentQuestion] === 0
                 ? 'bg-white/10 opacity-50 cursor-not-allowed'
-                : 'glow-button hover:scale-105'
+                : 'glow-button hover:scale-105 md:hover:shadow-[0_0_30px_rgba(99,102,241,0.6)]'
             }`}
           >
             <div className="flex items-center justify-center gap-2">

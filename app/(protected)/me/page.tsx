@@ -142,11 +142,14 @@ export default function MeScreen() {
           <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/30 to-black" />
         </div>
 
-        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
+        <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ 
+          paddingTop: 'max(2rem, calc(env(safe-area-inset-top, 0px) + 2rem))',
+          paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' 
+        }}>
           {/* Header */}
-          <div className="mb-8 text-center">
+          <div className="mb-8 text-center w-full">
             <div className="mb-4 text-6xl">🪞</div>
-            <h1 className="text-4xl font-bold text-white mb-2">
+            <h1 className="text-4xl font-bold text-white mb-2 mx-auto">
               Am I a red flag?
             </h1>
             <p className="text-gray-400">
@@ -165,7 +168,7 @@ export default function MeScreen() {
             </p>
             <button
               onClick={handleTakeTest}
-              className="rounded-xl glow-button px-8 py-4 font-bold text-white text-lg transition-all duration-300 hover:scale-105"
+              className="w-full md:w-auto rounded-xl glow-button px-8 py-4 font-bold text-white text-lg transition-all duration-300 hover:scale-105 md:min-w-[200px]"
             >
               Take the test
             </button>
@@ -186,10 +189,13 @@ export default function MeScreen() {
         <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-gradient-radial from-purple-600/20 via-purple-700/10 to-transparent blur-[150px] opacity-60" />
       </div>
 
-      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pt-8 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' }}>
+      <div className="relative z-10 flex flex-col px-6 md:px-8 lg:px-12 pb-8 animate-fade-in overflow-x-hidden w-full max-w-[600px] md:max-w-none mx-auto md:mx-0" style={{ 
+        paddingTop: 'max(2rem, calc(env(safe-area-inset-top, 0px) + 2rem))',
+        paddingBottom: 'max(8rem, calc(env(safe-area-inset-bottom, 0px) + 8rem))' 
+      }}>
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+        <div className="mb-8 text-center w-full">
+          <h1 className="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-2 w-full">
             🪞 Am I a red flag?
           </h1>
           <p className="text-gray-400">
@@ -235,7 +241,7 @@ export default function MeScreen() {
             </p>
             <button
               onClick={() => router.push('/profile?upgrade=true')}
-              className="rounded-xl bg-gradient-primary px-6 py-3 font-bold text-white transition-all hover:scale-105"
+              className="w-full md:w-auto md:min-w-[200px] rounded-xl bg-gradient-primary px-6 py-3 font-bold text-white transition-all hover:scale-105 md:hover:shadow-[0_0_25px_rgba(99,102,241,0.5)]"
             >
               Upgrade to Pro
             </button>
@@ -246,10 +252,10 @@ export default function MeScreen() {
         <button
           onClick={handleTakeTest}
           disabled={!canTakeTest && subscriptionStatus === 'free'}
-          className={`w-full rounded-xl px-6 py-4 font-bold text-white text-lg transition-all duration-300 ${
+          className={`w-full md:w-auto md:min-w-[250px] rounded-xl px-6 py-4 font-bold text-white text-lg transition-all duration-300 ${
             !canTakeTest && subscriptionStatus === 'free'
               ? 'border border-white/20 bg-black/50 backdrop-blur-xl opacity-60 cursor-not-allowed'
-              : 'glow-button hover:scale-105'
+              : 'glow-button hover:scale-105 md:hover:shadow-[0_0_30px_rgba(99,102,241,0.6)]'
           }`}
         >
           {!canTakeTest && subscriptionStatus === 'free'
